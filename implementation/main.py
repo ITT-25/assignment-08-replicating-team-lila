@@ -4,27 +4,37 @@ import cv2
 import numpy as np
 import config as cfg
 
+# Pipeline modules
+from marker_detection import MarkerDetection
+from fingertip_detection import FingertipDetection
+from piano import Piano
+from media_playback import MediaPlayback
+
+fingertips = FingertipDetection()
+markers = MarkerDetection()
+piano = Piano()
+media = MediaPlayback()
+
+
 def capture_loop(dt: float, frame: np.ndarray) -> None:
-    # TODO: Create seperate modules for each step in the pipeline
     # 1. ArUco marker detection and perspective transformation
-    # Find aruco markers in the frame
-    # Get perspective transformation matrix based on the detected markers
-    # Apply matrix and trim frame to markers
+    mrks = markers.detect(frame)
+    if mrks is None:
+        print("Error: No markers detected.")
+        return
+    
+    matrix = markers.get_transform_matrix(mrks)
+    transformed_frame = markers.apply_transformation(frame, matrix)
     
     # 2. Fingertip position detection (Position + Pressing status)
-    # Detect Hands with mediapipe and return fingertip coordinates relative to the cropped frame
-    # - Also detect if a finger is pressed down
-    # - Pressing status might require the hand detection to run before the perspective transformation,
-    #   which would require the perspective transformation to be applied to the fingertip positions as well (I think mediapipe can do 3D coordinates to a certain extent)
+    fts = fingertips.detect(frame, matrix)
     
     # 3. Map fingertips to piano keys
-    # Match the fingertip positions with a virtual piano keyboard and play the corresponding notes (high pitch depending on vertical position on key)
-    # Input: Fingertip Positions
-    # Output: List of pressed notes (with pitch)
+    notes = piano.map_to_keys(fts)
     
     # 4. Media playback + Visualization
-    # Play the notes in a media player and visualize the pressed keys in a cv2 window
-    pass
+    media.play_notes(notes)
+    media.visualize_keys(transformed_frame, notes)
 
 @click.command()
 @click.option("--video-id", "-c", default=1, help="Video ID")
