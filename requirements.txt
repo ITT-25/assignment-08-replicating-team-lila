@@ -21,6 +21,7 @@ packaging==25.0
 pillow==11.3.0
 protobuf==4.25.8
 pycparser==2.22
+pyfluidsynth==1.3.4
 pyparsing==3.2.3
 python-dateutil==2.9.0.post0
 scipy==1.16.0
