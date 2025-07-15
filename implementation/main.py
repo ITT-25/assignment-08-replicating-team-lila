@@ -13,7 +13,7 @@ from media_playback import MediaPlayback
 fingertips = FingertipDetection()
 markers = MarkerDetection()
 piano = Piano()
-media = MediaPlayback()
+media = MediaPlayback(piano)
 
 
 def capture_loop(dt: float, frame: np.ndarray) -> None:
@@ -30,11 +30,8 @@ def capture_loop(dt: float, frame: np.ndarray) -> None:
     fts = fingertips.detect(frame, matrix)
     
     # 3. Map fingertips to piano keys
-    notes = piano.map_to_keys(fts)
-    
-    # 4. Media playback + Visualization
-    media.play_notes(notes)
-    media.visualize_keys(transformed_frame, notes)
+    piano.update(fts)
+    media.update(dt)
 
 @click.command()
 @click.option("--video-id", "-c", default=1, help="Video ID")
