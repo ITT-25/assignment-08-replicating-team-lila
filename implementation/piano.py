@@ -7,7 +7,7 @@ from fingertip_detection import Fingertip
 class Note:
     """Represents a musical note with pitch and key."""
     pitch: float = 1.0
-    note: str
+    key: str
     octave: int
     last_activation: Optional[Tuple[float, Fingertip]] = None
     center: Tuple[int, int] = (0, 0)
@@ -27,11 +27,11 @@ class Piano:
         keys = []
         # Define all notes including sharps/flats
         notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'H']
-        
+        # TODO properly set the width, height and center of each key relative to the total width/height stored in the cfg module
         for octave in range(self.num_octaves):
             for note in notes:
                 keys.append(Note(
-                    note=note,
+                    key=note,
                     octave=octave,
                 ))
         return keys

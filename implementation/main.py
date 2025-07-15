@@ -27,11 +27,11 @@ def capture_loop(dt: float, frame: np.ndarray) -> None:
     transformed_frame = markers.apply_transformation(frame, matrix)
     
     # 2. Fingertip position detection (Position + Pressing status)
-    fts = fingertips.detect(frame, matrix)
+    fts = fingertips.detect(transformed_frame, matrix)
     
     # 3. Map fingertips to piano keys
     piano.update(fts)
-    media.update(dt)
+    media.update(dt, transformed_frame)
 
 @click.command()
 @click.option("--video-id", "-c", default=1, help="Video ID")
