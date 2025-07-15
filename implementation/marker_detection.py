@@ -1,17 +1,37 @@
 import numpy as np
 import cv2
+from typing import List, Tuple, Dict
+import cv2.aruco as aruco
 
 class MarkerDetection:
     """Handles ArUco marker detection and perspective transformation."""
-
-    def detect(self, frame: np.ndarray) -> np.ndarray:
+    def __init__(self):
+        self.aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
+        self.detector = aruco.ArucoDetector(self.aruco_dict, aruco.DetectorParameters())
+        self.marker_cache: Dict[int, Tuple[np.ndarray, float]] = {}
+        
+    def detect(self, frame: np.ndarray) -> List[Tuple[int, int]]:
         """Detects ArUco markers in the given frame."""
-        # Get markers
-        pass
+        # Get marker corners
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        detected_markers, marker_ids, _ = self.detector.detectMarkers(gray)
 
-    def get_transform_matrix(self, markers: np.ndarray) -> np.ndarray:
+        marker_corners = [marker[0] for marker in detected_markers] if detected_markers else []
+        marker_centers = [np.mean(corners, axis=0) for corners in marker_corners]
+        marker_data = list(zip(marker_centers, marker_corners))
+
+        return marker_data
+
+
+    def get_transform_matrix(self, markers: List[Tuple[int, int]], width: int, height: int) -> np.ndarray:
         """Calculates the perspective transformation matrix based on detected markers."""
-        pass
+        if len(markers) < 4:
+            raise ValueError("At least 4 markers are required to compute the transformation matrix.")
+
+        dst_pts = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32)
+
+        matrix = cv2.getPerspectiveTransform(np.array(markers, dtype=np.float32), dst_pts)
+        return matrix
 
     def apply_transformation(self, frame: np.ndarray, matrix: np.ndarray) -> np.ndarray:
         """Applies the perspective transformation to the frame."""
