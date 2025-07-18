@@ -23,8 +23,13 @@ def capture_loop(dt: float, frame: np.ndarray) -> None:
         print("Error: No markers detected.")
         return
     
-    matrix = markers.get_transform_matrix(mrks, cfg.WINDOW_WIDTH, cfg.WINDOW_HEIGHT)
+    matrix = markers.get_transform_matrix(mrks, frame.shape[1], frame.shape[0])
     transformed_frame = markers.apply_transformation(frame, matrix)
+
+    print("width ", cfg.WINDOW_WIDTH)
+    print("height ", cfg.WINDOW_HEIGHT)
+
+    transformed_frame = cv2.resize(transformed_frame, (cfg.WINDOW_WIDTH, cfg.WINDOW_HEIGHT))
     
     # 2. Fingertip position detection (Position + Pressing status)
     fts = fingertips.detect(transformed_frame, matrix)
@@ -39,8 +44,8 @@ def main(video_id: int):
     cap = cv2.VideoCapture(video_id)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, cfg.VIDEO_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, cfg.VIDEO_HEIGHT)
-    cfg.VIDEO_WIDTH = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    cfg.VIDEO_HEIGHT = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # cfg.VIDEO_WIDTH = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    # cfg.VIDEO_HEIGHT = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
     if not cap.isOpened():
         print(f"Error: Could not open camera with ID {video_id}")

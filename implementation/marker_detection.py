@@ -38,7 +38,7 @@ class MarkerDetection:
 
         marker_corners = [marker[0] for marker in detected_markers] if detected_markers else []
         marker_centers = [np.mean(corners, axis=0) for corners in marker_corners]
-        marker_data = list(zip(marker_centers, marker_corners))
+        # marker_data = list(zip(marker_centers, marker_corners))
         
         # Draw detected markers on the frame
         if marker_ids is not None:

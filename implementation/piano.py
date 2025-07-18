@@ -12,7 +12,7 @@ class Note:
     pitch: float = 1.0
     last_activation: Optional[Tuple[float, Fingertip]] = None
     center: Tuple[int, int] = (0, 0)
-    width: int = 0
+    width: int = 70
     height: int = 0
 
 class Piano:
@@ -21,6 +21,8 @@ class Piano:
     def __init__(self, num_octaves: int = 2, pitch_range: Tuple[float, float] = (0.5, 2.0)):
         self.num_octaves: int = num_octaves
         self.pitch_range: Tuple[float, float] = pitch_range
+        config.WINDOW_WIDTH = Note.width * self.num_octaves * 7
+        config.WINDOW_HEIGHT = int(config.WINDOW_WIDTH // 1.77)
         self.keys: List[Note] = self._generate_keys()
 
     def _generate_keys(self) -> List[Note]:
@@ -29,16 +31,17 @@ class Piano:
         num_of_octaves = self.num_octaves
         # Define all notes including sharps/flats
         notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'H']
-        key_width = (config.WINDOW_WIDTH / len(notes)) * (1 / num_of_octaves)
+
+        #key_width = (config.WINDOW_WIDTH / len(notes)) * (1 / num_of_octaves)
         # properly set the width, height and center of each key relative to the total width/height stored in the cfg module
         for octave in range(num_of_octaves):
             for note in range(len(notes)):
-                center_x = key_width * ((octave * len(notes)) + note + 0.5)
+                center_x = Note.width * ((octave * len(notes)) + note + 0.5)
                 keys.append(Note(
                     key=notes[note],
                     octave=octave,
-                    center=(center_x, config.WINDOW_HEIGHT / 2),
-                    width=key_width,
+                    center=(center_x, config.WINDOW_WIDTH / 2),
+                    width=Note.width,
                     height=config.WINDOW_HEIGHT
                 ))
         return keys
