@@ -9,6 +9,26 @@ class MarkerDetection:
         self.aruco_dict = aruco.getPredefinedDictionary(aruco_dict)
         self.detector = aruco.ArucoDetector(self.aruco_dict, aruco.DetectorParameters())
         self.marker_cache: Dict[int, Tuple[np.ndarray, float]] = {}
+
+    
+    def sort_markers(self, arr):
+        arr_np = np.array(arr)
+
+        # Sort points by their y-coordinate
+        sort_y = sorted(arr_np, key=lambda x: x[1])
+
+        # Split sorted points into top and bottom
+        top_y = sort_y[:2]
+        bottom_y = sort_y[2:]
+
+        # Sort points by position
+        top_left = min(top_y, key=lambda x: x[0])
+        top_right = max(top_y, key=lambda x: x[0])
+        bottom_left = min(bottom_y, key=lambda x: x[0])
+        bottom_right = max(bottom_y, key=lambda x: x[0])
+
+        return np.float32(np.array([top_left, top_right, bottom_right, bottom_left]))
+
         
     def detect(self, frame: np.ndarray) -> List[Tuple[int, int]]:
         """Detects ArUco markers in the given frame."""
@@ -40,6 +60,8 @@ class MarkerDetection:
             return None
 
         src_pts= np.float32(np.array([corners[1] for corners in markers]))
+
+        src_pts = self.sort_markers(src_pts)
 
         dst_pts = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32)
 
