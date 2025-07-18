@@ -14,8 +14,8 @@ class Fingertip:
 
 class FingertipDetection:
     """Handles fingertip position detection and pressing status."""
-    def __init__(self, model_path: str = "pointing_input/gesture_recognizer.task"):
-        base_options = python.BaseOptions(model_asset_buffer=open(model_path, "rb").read())
+    def __init__(self):
+        base_options = python.BaseOptions()
         options = GestureRecognizerOptions(base_options=base_options, num_hands=2)
         self.recognizer = GestureRecognizer.create_from_options(options)
         

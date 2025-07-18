@@ -2,13 +2,14 @@ import time
 from typing import Optional, Tuple, List
 from dataclasses import dataclass
 from fingertip_detection import Fingertip
+import config
 
 @dataclass
 class Note:
     """Represents a musical note with pitch and key."""
-    pitch: float = 1.0
     key: str
     octave: int
+    pitch: float = 1.0
     last_activation: Optional[Tuple[float, Fingertip]] = None
     center: Tuple[int, int] = (0, 0)
     width: int = 0
@@ -25,14 +26,20 @@ class Piano:
     def _generate_keys(self) -> List[Note]:
         """Generates virtual piano keys for the specified number of octaves."""
         keys = []
+        num_of_octaves = self.num_octaves
         # Define all notes including sharps/flats
         notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'H']
-        # TODO properly set the width, height and center of each key relative to the total width/height stored in the cfg module
-        for octave in range(self.num_octaves):
-            for note in notes:
+        key_width = (config.WINDOW_WIDTH / len(notes)) * (1 / num_of_octaves)
+        # properly set the width, height and center of each key relative to the total width/height stored in the cfg module
+        for octave in range(len(num_of_octaves)):
+            for note in len(notes):
+                center_x = key_width * ((octave * len(notes)) + note + 0.5)
                 keys.append(Note(
-                    key=note,
+                    key=notes[note],
                     octave=octave,
+                    center=(center_x, config.WINDOW_HEIGHT / 2),
+                    width=key_width,
+                    height=config.WINDOW_HEIGHT
                 ))
         return keys
     
