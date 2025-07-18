@@ -29,21 +29,47 @@ class Piano:
         """Generates virtual piano keys for the specified number of octaves."""
         keys = []
         num_of_octaves = self.num_octaves
-        # Define all notes including sharps/flats
         notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'H']
-
-        #key_width = (config.WINDOW_WIDTH / len(notes)) * (1 / num_of_octaves)
-        # properly set the width, height and center of each key relative to the total width/height stored in the cfg module
+        natural_notes = ['C', 'D', 'E', 'F', 'G', 'A', 'H']
+        
+        # Sharp note positions relative to natural keys (between white keys)
+        sharp_positions = {
+            'C#': 0.5,  # Between C (0) and D (1)
+            'D#': 1.5,  # Between D (1) and E (2)
+            'F#': 3.5,  # Between F (3) and G (4)
+            'G#': 4.5,  # Between G (4) and A (5)
+            'A#': 5.5   # Between A (5) and H (6)
+        }
+        
         for octave in range(num_of_octaves):
-            for note in range(len(notes)):
-                center_x = Note.width * ((octave * len(notes)) + note + 0.5)
-                keys.append(Note(
-                    key=notes[note],
-                    octave=octave,
-                    center=(center_x, config.WINDOW_WIDTH / 2),
-                    width=Note.width,
-                    height=config.WINDOW_HEIGHT
-                ))
+            natural_key_index = 0
+            
+            for note in notes:
+                if '#' in note:
+                    # Sharp key positioning - positioned between natural keys
+                    relative_pos = sharp_positions[note]
+                    center_x = (octave * len(natural_notes) + relative_pos) * Note.width
+                    # Sharp keys start from top and go down 40% of the height
+                    sharp_center_y = config.WINDOW_HEIGHT * 0.2  # Center at 20% from top
+                    keys.append(Note(
+                        key=note,
+                        octave=octave,
+                        center=(center_x, sharp_center_y),
+                        width=Note.width * 0.6,  # Sharp keys are narrower
+                        height=config.WINDOW_HEIGHT * 0.4  # 40% of total height
+                    ))
+                else:
+                    # Natural key positioning - each key positioned at its index * width + half width for center
+                    center_x = (octave * len(natural_notes) + natural_key_index) * Note.width + Note.width / 2
+                    keys.append(Note(
+                        key=note,
+                        octave=octave,
+                        center=(center_x, config.WINDOW_HEIGHT / 2),
+                        width=Note.width,
+                        height=config.WINDOW_HEIGHT
+                    ))
+                    natural_key_index += 1
+        
         return keys
     
     def update(self, fingertips: List[Fingertip]) -> None:

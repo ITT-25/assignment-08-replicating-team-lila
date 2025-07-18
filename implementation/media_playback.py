@@ -41,16 +41,15 @@ class MediaPlayback:
         natural_keys = [note for note in notes if "#" not in note.key]
         sharp_keys = [note for note in notes if "#" in note.key]
 
-        for i, note in enumerate(natural_keys):
-            key_width = note.width
-            key_height = note.height
+        # Draw natural keys first
+        for note in natural_keys:
             top_left = (
-                int(i * key_width),
-                int(note.center[1] - key_height // 2)
+                int(note.center[0] - note.width // 2),
+                int(note.center[1] - note.height // 2)
             )
             bottom_right = (
-                int((i + 1) * key_width),
-                int(note.center[1] + key_height // 2)
+                int(note.center[0] + note.width // 2),
+                int(note.center[1] + note.height // 2)
             )
 
             color = (0, 255, 0) if note.last_activation else (255, 255, 255)
@@ -61,21 +60,21 @@ class MediaPlayback:
             border_color = (200, 200, 200)
             cv2.rectangle(frame, top_left, bottom_right, border_color, 1)
 
+        # Draw sharp keys on top of natural keys
         for note in sharp_keys:
-            key_width = note.width * 0.6
-            key_height = note.height * 0.6
-            x_offset = note.width * 0.5
             top_left = (
-                int(note.center[0] - key_width // 2 + x_offset),
+                int(note.center[0] - note.width // 2),
                 int(note.center[1] - note.height // 2)
             )
             bottom_right = (
-                int(note.center[0] + key_width // 2 + x_offset),
-                int(note.center[1] - note.height // 2 + key_height)
+                int(note.center[0] + note.width // 2),
+                int(note.center[1] + note.height // 2)
             )
 
-            color = (0, 255, 0, 170) if note.last_activation else (0, 0, 0, 170)
-            cv2.rectangle(frame, top_left, bottom_right, color, -1)
+            color = (0, 255, 0) if note.last_activation else (0, 0, 0)
+            overlay = frame.copy()
+            cv2.rectangle(overlay, top_left, bottom_right, color, -1)
+            frame = cv2.addWeighted(overlay, 0.5, frame, 0.5, 0)
 
         cv2.imshow("Piano Keys", frame)
         cv2.waitKey(1)
