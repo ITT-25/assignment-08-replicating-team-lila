@@ -34,11 +34,11 @@ class Piano:
         
         # Sharp note positions relative to natural keys (between white keys)
         sharp_positions = {
-            'C#': 0.5,  # Between C (0) and D (1)
-            'D#': 1.5,  # Between D (1) and E (2)
-            'F#': 3.5,  # Between F (3) and G (4)
-            'G#': 4.5,  # Between G (4) and A (5)
-            'A#': 5.5   # Between A (5) and H (6)
+            'C#': 1,  # Between C (0) and D (1)
+            'D#': 2,  # Between D (1) and E (2)
+            'F#': 4,  # Between F (3) and G (4)
+            'G#': 5,  # Between G (4) and A (5)
+            'A#': 6   # Between A (5) and H (6)
         }
         
         for octave in range(num_of_octaves):
