@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Tuple
 import numpy as np
 import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python.vision.gesture_recognizer import GestureRecognizer, GestureRecognizerOptions
+from mediapipe.python.solutions.hands import Hands
 
 @dataclass
 class Fingertip:
@@ -15,14 +14,14 @@ class Fingertip:
 class FingertipDetection:
     """Handles fingertip position detection and pressing status."""
     def __init__(self):
-        base_options = python.BaseOptions()
-        options = GestureRecognizerOptions(base_options=base_options, num_hands=2)
-        self.recognizer = GestureRecognizer.create_from_options(options)
+        self.hands = Hands(
+            static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5, min_tracking_confidence=0.5
+        )
         
     def detect(self, frame: np.ndarray, matrix: Optional[np.ndarray]) -> List[Fingertip]:
         """Detects fingertips in the given frame."""
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
-        result = self.recognizer.recognize(mp_image)
+        result = self.hands.process(mp_image)
         
         fingertips: List[Fingertip] = []
 
@@ -30,7 +29,7 @@ class FingertipDetection:
         # 4=thumb, 8=index, 12=middle, 16=ring, 20=pinky
         fingertip_indices = [4, 8, 12, 16, 20]
         
-        for landmarks, handedness in zip(result.hand_landmarks, result.handedness):
+        for landmarks, handedness in zip(result.multi_hand_landmarks, result.multi_handedness):
             if not landmarks:
                 continue
             
