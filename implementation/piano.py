@@ -31,8 +31,8 @@ class Piano:
         notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'H']
         key_width = (config.WINDOW_WIDTH / len(notes)) * (1 / num_of_octaves)
         # properly set the width, height and center of each key relative to the total width/height stored in the cfg module
-        for octave in range(len(num_of_octaves)):
-            for note in len(notes):
+        for octave in range(num_of_octaves):
+            for note in range(len(notes)):
                 center_x = key_width * ((octave * len(notes)) + note + 0.5)
                 keys.append(Note(
                     key=notes[note],
