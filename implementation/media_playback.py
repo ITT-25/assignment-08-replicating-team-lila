@@ -14,7 +14,7 @@ class MediaPlayback:
         self.fs = fluidsynth.Synth()
         self.fs.start()
 
-        sfid = self.fs.sfload("example.sf2")
+        sfid = self.fs.sfload("FluidR3_GM.sf2")
         self.fs.program_select(0, sfid, 0, 0)
 
         # Initialize media player, e.g., pygame, soundfile, etc.
@@ -54,5 +54,5 @@ class MediaPlayback:
                 (int(note.center[0] + note.width // 2), int(note.center[1] + note.height // 2)),
                 color
             )
-                
-            
+        cv2.imshow("Piano Keys", frame)
+        cv2.waitKey(1)

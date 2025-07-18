@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 import numpy as np
-import mediapipe as mp
 from mediapipe.python.solutions.hands import Hands
 
 @dataclass
@@ -20,8 +19,10 @@ class FingertipDetection:
         
     def detect(self, frame: np.ndarray, matrix: Optional[np.ndarray]) -> List[Fingertip]:
         """Detects fingertips in the given frame."""
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
-        result = self.hands.process(mp_image)
+        result = self.hands.process(frame)
+        
+        if not result or not result.multi_hand_landmarks:
+            return []  # Return empty list if no hands detected
         
         fingertips: List[Fingertip] = []
 

@@ -23,7 +23,7 @@ def capture_loop(dt: float, frame: np.ndarray) -> None:
         print("Error: No markers detected.")
         return
     
-    matrix = markers.get_transform_matrix(mrks)
+    matrix = markers.get_transform_matrix(mrks, cfg.WINDOW_WIDTH, cfg.WINDOW_HEIGHT)
     transformed_frame = markers.apply_transformation(frame, matrix)
     
     # 2. Fingertip position detection (Position + Pressing status)

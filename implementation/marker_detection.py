@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from typing import List, Tuple, Dict
+from typing import List, Optional, Tuple, Dict
 import cv2.aruco as aruco
 
 class MarkerDetection:
@@ -23,16 +23,19 @@ class MarkerDetection:
         return marker_data
 
 
-    def get_transform_matrix(self, markers: List[Tuple[int, int]], width: int, height: int) -> np.ndarray:
+    def get_transform_matrix(self, markers: List[Tuple[int, int]], width: int, height: int) -> Optional[np.ndarray]:
         """Calculates the perspective transformation matrix based on detected markers."""
         if len(markers) < 4:
-            raise ValueError("At least 4 markers are required to compute the transformation matrix.")
+            print("At least 4 markers are required to compute the transformation matrix.")
+            return None
 
         dst_pts = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32)
 
         matrix = cv2.getPerspectiveTransform(np.array(markers, dtype=np.float32), dst_pts)
         return matrix
 
-    def apply_transformation(self, frame: np.ndarray, matrix: np.ndarray) -> np.ndarray:
+    def apply_transformation(self, frame: np.ndarray, matrix: Optional[np.ndarray]) -> np.ndarray:
         """Applies the perspective transformation to the frame."""
+        if matrix is None:
+            return frame  # If no valid matrix, return original frame
         return cv2.warpPerspective(frame, matrix, (frame.shape[1], frame.shape[0]))
