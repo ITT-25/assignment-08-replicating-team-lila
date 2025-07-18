@@ -28,10 +28,13 @@ class MarkerDetection:
         if len(markers) < 4:
             print("At least 4 markers are required to compute the transformation matrix.")
             return None
+        
+        marker_corners = [corners for _, corners in markers[:4]]
+        src_pts= np.float32(np.array([corners[0] for corners in marker_corners]))
 
         dst_pts = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32)
 
-        matrix = cv2.getPerspectiveTransform(np.array(markers, dtype=np.float32), dst_pts)
+        matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
         return matrix
 
     def apply_transformation(self, frame: np.ndarray, matrix: Optional[np.ndarray]) -> np.ndarray:
