@@ -38,9 +38,8 @@ class MarkerDetection:
         if len(markers) < 4:
             print(f"{len(markers)}/4 markers")
             return None
-        
-        marker_corners = [corners for _, corners in markers[:4]]
-        src_pts= np.float32(np.array([corners[0] for corners in marker_corners]))
+
+        src_pts= np.float32(np.array([corners[1] for corners in markers]))
 
         dst_pts = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32)
 
