@@ -4,8 +4,6 @@ from piano import Note, Piano
 import fluidsynth
 
 
-# ? Might make more sense to store key states and start/stop sounds based on events?
-
 class MediaPlayback:
     """Handles media playback and visualization."""
 
@@ -16,9 +14,6 @@ class MediaPlayback:
 
         sfid = self.fs.sfload("FluidR3_GM.sf2")
         self.fs.program_select(0, sfid, 0, 0)
-
-        # Initialize media player, e.g., pygame, soundfile, etc.
-        # self.player = MediaPlayer()  # Placeholder for actual media player initialization
 
     def update(self, dt: float, frame: np.ndarray) -> None:
         """Updates the media playback state."""
@@ -43,16 +38,44 @@ class MediaPlayback:
 
     def visualize_keys(self, frame: np.ndarray, notes: list[Note]) -> None:
         """Visualizes the pressed keys in a cv2 window."""
-        for note in notes:
-            is_sharp = "#" in note.key
-            color = (0, 0, 255, 170) if is_sharp else (255, 255, 255, 170)
-            color = color if not note.last_activation else (0, 255, 0, 170)
+        natural_keys = [note for note in notes if "#" not in note.key]
+        sharp_keys = [note for note in notes if "#" in note.key]
 
-            cv2.rectangle(
-                frame,
-                (int(note.center[0] - note.width // 2), int(note.center[1] - note.height // 2)),
-                (int(note.center[0] + note.width // 2), int(note.center[1] + note.height // 2)),
-                color
+        for i, note in enumerate(natural_keys):
+            key_width = note.width
+            key_height = note.height
+            top_left = (
+                int(i * key_width),
+                int(note.center[1] - key_height // 2)
             )
+            bottom_right = (
+                int((i + 1) * key_width),
+                int(note.center[1] + key_height // 2)
+            )
+
+            color = (0, 255, 0) if note.last_activation else (255, 255, 255)
+            overlay = frame.copy()
+            cv2.rectangle(overlay, top_left, bottom_right, color, -1)
+            frame = cv2.addWeighted(overlay, 0.5, frame, 0.5, 0)
+
+            border_color = (200, 200, 200)
+            cv2.rectangle(frame, top_left, bottom_right, border_color, 1)
+
+        for note in sharp_keys:
+            key_width = note.width * 0.6
+            key_height = note.height * 0.6
+            x_offset = note.width * 0.5
+            top_left = (
+                int(note.center[0] - key_width // 2 + x_offset),
+                int(note.center[1] - note.height // 2)
+            )
+            bottom_right = (
+                int(note.center[0] + key_width // 2 + x_offset),
+                int(note.center[1] - note.height // 2 + key_height)
+            )
+
+            color = (0, 255, 0, 170) if note.last_activation else (0, 0, 0, 170)
+            cv2.rectangle(frame, top_left, bottom_right, color, -1)
+
         cv2.imshow("Piano Keys", frame)
         cv2.waitKey(1)
