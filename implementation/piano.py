@@ -74,19 +74,34 @@ class Piano:
     
     def update(self, fingertips: List[Fingertip]) -> None:
         """Updates the piano keys based on fingertip positions."""
+        # First, clear all keys that are no longer being pressed by their activating fingertip
+        for key in self.keys:
+            if key.last_activation is not None:
+                activating_fingertip = key.last_activation[1]
+                # Check if the activating fingertip is still pressing this key
+                fingertip_still_pressing = False
+                for fingertip in fingertips:
+                    if (fingertip.id == activating_fingertip.id and 
+                        fingertip.is_pressed):
+                        is_overlapping, pitch = self._get_overlap_data(fingertip, key)
+                        if is_overlapping:
+                            fingertip_still_pressing = True
+                            key.pitch = pitch
+                            break
+                
+                # If the activating fingertip is no longer pressing, deactivate the key
+                if not fingertip_still_pressing:
+                    key.last_activation = None
+        
+        # Then, check for new activations
         for fingertip in fingertips:
             if fingertip.is_pressed:
                 for key in self.keys:
                     is_overlapping, pitch = self._get_overlap_data(fingertip, key)
                     
-                    if is_overlapping:
-                        key.pitch = pitch
-                        
-                    if key.last_activation is None and is_overlapping:
+                    if is_overlapping and key.last_activation is None:
                         key.last_activation = (time.time(), fingertip)
-                        
-                    elif key.last_activation is not None and not is_overlapping:
-                        key.last_activation = None
+                        key.pitch = pitch
                 
     def _get_overlap_data(self, fingertip: Fingertip, key: Note) -> Tuple[bool, float]:
         """Checks if a fingertip overlaps with a piano key."""
@@ -96,10 +111,10 @@ class Piano:
             fingertip.position[1] >= key.center[1] - key.height // 2 and
             fingertip.position[1] <= key.center[1] + key.height // 2
         )
-        
-        relative_center = key.last_activation[1].position if key.last_activation else fingertip.position
 
         if overlap:
+            # Use the key's center as the reference point for pitch calculation
+            relative_center = key.last_activation[1].position if key.last_activation else key.center
             y_delta = fingertip.position[1] - relative_center[1]
             pitch_direction = 1 if y_delta < 0 else -1
             y_delta = abs(y_delta)
