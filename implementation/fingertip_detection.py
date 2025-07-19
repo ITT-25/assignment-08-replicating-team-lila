@@ -3,6 +3,7 @@ from typing import Deque, List, Optional, Tuple
 import numpy as np
 from mediapipe.python.solutions.hands import Hands
 import config as cfg
+from scipy.stats import linregress
 
 @dataclass
 class Fingertip:
@@ -75,6 +76,20 @@ class FingertipDetection:
             return False
         
         # TODO properly detect pressing motion from z_history
-        
-        return True
+
+        x = np.arange(len(z_history))
+        slope, intercept, r_value, p_value, std_err = linregress(x, z_history) #Calculate upward or downward tendencies
+
+        if slope > 0.0001:
+            #print("Die Zahlen steigen tendenziell.")
+            print("True")
+            return True
+        elif slope < -0.0001:
+            #print("Die Zahlen fallen tendenziell.")
+            print("False")
+            return False
+        else:
+            print("Keine Tendenz erkennbar.")
+
+        return False
 
