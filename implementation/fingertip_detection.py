@@ -18,7 +18,7 @@ class FingertipDetection:
         self.hands = Hands(
             static_image_mode=False, max_num_hands=2, min_detection_confidence=0.4, min_tracking_confidence=0.4
         )
-        self.fingertip_history: Deque[List[Fingertip]] = Deque(maxlen=int(cfg.SAMPLING_RATE / 2))
+        self.fingertip_history: Deque[List[Fingertip]] = Deque(maxlen=cfg.SAMPLING_RATE // 2)
 
 
     def detect(self, frame: np.ndarray, matrix: Optional[np.ndarray]) -> List[Fingertip]:
@@ -64,32 +64,51 @@ class FingertipDetection:
     
     def _detect_pressing_status(self, fingertip_id: int) -> bool:
         """Detects fingertip pressing status based on patterns in z coordinate history."""
-        # Create a list of z coordinates for the specified fingertip ID from the history
         z_history: List[float] = []
-        
+
         for fingertips in self.fingertip_history:
             for fingertip in fingertips:
                 if fingertip.id == fingertip_id:
                     z_history.append(fingertip.position[2])
-        
+
         if len(z_history) < self.fingertip_history.maxlen:
             return False
-        
-        # TODO properly detect pressing motion from z_history
 
-        x = np.arange(len(z_history))
-        slope, intercept, r_value, p_value, std_err = linregress(x, z_history) #Calculate upward or downward tendencies
+        # Find the maximum and the first minimum to the left and right of the maximum
+        max_index = np.argmax(z_history)
+        left_min_index = max_index - 1
+        right_min_index = max_index + 1
 
-        if slope > 0.0001:
-            #print("Die Zahlen steigen tendenziell.")
-            print("True")
-            return True
-        elif slope < -0.0001:
-            #print("Die Zahlen fallen tendenziell.")
-            print("False")
+        while left_min_index > 0 and z_history[left_min_index - 1] <= z_history[left_min_index]:
+            left_min_index -= 1
+
+        while right_min_index < len(z_history) - 1 and z_history[right_min_index + 1] <= z_history[right_min_index]:
+            right_min_index += 1
+
+        # Ensure the segments have valid lengths
+        if left_min_index >= max_index or right_min_index <= max_index:
             return False
-        else:
-            print("Keine Tendenz erkennbar.")
+
+        # Perform linear regression on the two segments
+        left_segment_x = np.arange(max_index - left_min_index + 1)
+        left_segment_y = z_history[left_min_index:max_index + 1]
+
+        if len(left_segment_x) != len(left_segment_y):
+            return False
+
+        left_slope, _, _, _, _ = linregress(left_segment_x, left_segment_y)
+
+        right_segment_x = np.arange(right_min_index - max_index + 1)
+        right_segment_y = z_history[max_index:right_min_index + 1]
+
+        if len(right_segment_x) != len(right_segment_y):
+            return False
+
+        right_slope, _, _, _, _ = linregress(right_segment_x, right_segment_y)
+
+        # Check for smooth upward slope followed by smooth downward slope
+        if left_slope > 0.0001 and right_slope < -0.0001:
+            return True
 
         return False
 
