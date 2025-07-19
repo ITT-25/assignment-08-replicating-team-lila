@@ -25,6 +25,9 @@ class Piano:
         config.WINDOW_HEIGHT = int(config.WINDOW_WIDTH // 1.77)
         self.keys: List[Note] = self._generate_keys()
 
+        self.sharp_keys = [key for key in self.keys if '#' in key.key]
+        self.natural_keys = [key for key in self.keys if '#' not in key.key]
+
     def _generate_keys(self) -> List[Note]:
         """Generates virtual piano keys for the specified number of octaves."""
         keys = []
@@ -95,13 +98,39 @@ class Piano:
         
         # Then, check for new activations
         for fingertip in fingertips:
-            if fingertip.is_pressed:
-                for key in self.keys:
-                    is_overlapping, pitch = self._get_overlap_data(fingertip, key)
-                    
-                    if is_overlapping and key.last_activation is None:
+            if not fingertip.is_pressed:
+                continue
+
+            for key in self.keys:
+                is_overlapping, pitch = self._get_overlap_data(fingertip, key)
+                if is_overlapping and key.last_activation is None:
+
+                    # If the key is a white key and overlaps a sharp one, skip this white key (to avoid activating both)
+                    if '#' not in key.key:
+                        for sk in self.sharp_keys:
+                            overlap, _ = self._get_overlap_data(fingertip, sk)
+                            if overlap:
+                                break
+
+                        # If it does not overlap a sharp one, activate the white key
+                        else:
+                            key.last_activation = (time.time(), fingertip)
+                            key.pitch = pitch
+                            break
+
+                    # If it's a sharp key, activate it immediately
+                    else:
                         key.last_activation = (time.time(), fingertip)
                         key.pitch = pitch
+                        break
+
+                # for key in self.keys:
+                #     is_overlapping, pitch = self._get_overlap_data(fingertip, key)
+                    
+                #     if is_overlapping and key.last_activation is None:
+                #         key.last_activation = (time.time(), fingertip)
+                #         key.pitch = pitch
+
                 
     def _get_overlap_data(self, fingertip: Fingertip, key: Note) -> Tuple[bool, float]:
         """Checks if a fingertip overlaps with a piano key."""
