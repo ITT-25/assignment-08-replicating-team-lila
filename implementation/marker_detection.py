@@ -31,24 +31,27 @@ class MarkerDetection:
 
         
     def detect(self, frame: np.ndarray) -> List[Tuple[int, int]]:
-        """Detects ArUco markers in the given frame."""
+        """Detects ArUco markers in the given frame and updates the marker cache."""
         # Get marker corners
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         detected_markers, marker_ids, _ = self.detector.detectMarkers(gray)
 
         marker_corners = [marker[0] for marker in detected_markers] if detected_markers else []
         marker_centers = [np.mean(corners, axis=0) for corners in marker_corners]
-        # marker_data = list(zip(marker_centers, marker_corners))
-        
+
+        # Update marker cache with detected markers
+        if marker_ids is not None:
+            for i, marker_id in enumerate(marker_ids):
+                self.marker_cache[int(marker_id[0])] = (marker_centers[i], marker_corners[i])
+
+        # Reuse cached markers if not visible in the current frame
+        marker_data = []
+        for marker_id, (center, corners) in self.marker_cache.items():
+            marker_data.append((marker_id, center))
+
         # Draw detected markers on the frame
         if marker_ids is not None:
             aruco.drawDetectedMarkers(frame, detected_markers, marker_ids)
-
-        # Convert marker centers and IDs to a list of tuples
-        marker_data = []
-        if marker_ids is not None:
-            for i, marker_id in enumerate(marker_ids):
-                marker_data.append((int(marker_id[0]), marker_centers[i]))
 
         return marker_data
 

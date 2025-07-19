@@ -30,7 +30,9 @@ def capture_loop(dt: float, frame: np.ndarray) -> None:
     print("height ", cfg.WINDOW_HEIGHT)
 
     transformed_frame = cv2.resize(transformed_frame, (cfg.WINDOW_WIDTH, cfg.WINDOW_HEIGHT))
-    
+    # Flip both horizontally and vertically for better visualization
+    transformed_frame = cv2.flip(transformed_frame, -1)
+
     # 2. Fingertip position detection (Position + Pressing status)
     fts = fingertips.detect(transformed_frame, matrix)
     
