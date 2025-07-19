@@ -18,7 +18,7 @@ class FingertipDetection:
         self.hands = Hands(
             static_image_mode=False, max_num_hands=2, min_detection_confidence=0.4, min_tracking_confidence=0.4
         )
-        self.fingertip_history: Deque[List[Fingertip]] = Deque(maxlen=cfg.SAMPLING_RATE // 2)
+        self.fingertip_history: Deque[List[Fingertip]] = Deque(maxlen=cfg.SAMPLING_RATE // 4)
 
 
     def detect(self, frame: np.ndarray, matrix: Optional[np.ndarray]) -> List[Fingertip]:
@@ -74,24 +74,33 @@ class FingertipDetection:
         if len(z_history) < self.fingertip_history.maxlen:
             return False
 
-        # Find the maximum and the first minimum to the left and right of the maximum
-        max_index = np.argmax(z_history)
-        left_min_index = max_index - 1
-        right_min_index = max_index + 1
+        # Smooth the z_history using a simple moving average
+        smoothed_z_history = np.convolve(z_history, np.ones(3)/3, mode='valid')
 
-        while left_min_index > 0 and z_history[left_min_index - 1] <= z_history[left_min_index]:
+        # Find the maximum and the first minimum to the left and right of the maximum
+        max_index = np.argmax(smoothed_z_history)
+        left_min_index = max(max_index - 1, 0)
+        right_min_index = min(max_index + 1, len(smoothed_z_history) - 1)
+
+        while left_min_index > 0 and smoothed_z_history[left_min_index - 1] <= smoothed_z_history[left_min_index]:
             left_min_index -= 1
 
-        while right_min_index < len(z_history) - 1 and z_history[right_min_index + 1] <= z_history[right_min_index]:
+        while right_min_index < len(smoothed_z_history) - 1 and smoothed_z_history[right_min_index + 1] <= smoothed_z_history[right_min_index]:
             right_min_index += 1
 
-        # Ensure the segments have valid lengths
+        # Ensure the segments have valid lengths and check thresholds
         if left_min_index >= max_index or right_min_index <= max_index:
+            return False
+
+        min_value = min(smoothed_z_history[left_min_index], smoothed_z_history[right_min_index])
+        max_value = smoothed_z_history[max_index]
+
+        if abs(min_value - smoothed_z_history[right_min_index]) > 0.01 or (max_value - min_value) < 0.01:
             return False
 
         # Perform linear regression on the two segments
         left_segment_x = np.arange(max_index - left_min_index + 1)
-        left_segment_y = z_history[left_min_index:max_index + 1]
+        left_segment_y = smoothed_z_history[left_min_index:max_index + 1]
 
         if len(left_segment_x) != len(left_segment_y):
             return False
@@ -99,7 +108,7 @@ class FingertipDetection:
         left_slope, _, _, _, _ = linregress(left_segment_x, left_segment_y)
 
         right_segment_x = np.arange(right_min_index - max_index + 1)
-        right_segment_y = z_history[max_index:right_min_index + 1]
+        right_segment_y = smoothed_z_history[max_index:right_min_index + 1]
 
         if len(right_segment_x) != len(right_segment_y):
             return False
