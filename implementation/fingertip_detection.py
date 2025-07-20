@@ -79,6 +79,10 @@ class FingertipDetection:
                             np.array([[[base_x, base_y]]], dtype=np.float32), matrix
                         )[0][0]
                         base_x, base_y = int(transformed_base[0]), int(transformed_base[1])
+                        
+                    # Flip the y based on the frame height
+                    y = frame.shape[0] - y
+                    base_y = frame.shape[0] - base_y
 
                     # Create consistent ID based on hand index and fingertip index
                     # Left hand: IDs 0-4, Right hand: IDs 5-9

@@ -18,7 +18,7 @@ media = MediaPlayback(piano)
 
 def capture_loop(dt: float, frame: np.ndarray) -> None:
     """Process each frame of video to detect markers, hands, and render piano."""
-    # 1. ArUco marker detection and perspective transformation
+    # ArUco marker detection and perspective transformation
     mrks = markers.detect(frame)
     if len(mrks) < 4:
         print(f"{len(mrks)}/4 markers")
@@ -29,34 +29,48 @@ def capture_loop(dt: float, frame: np.ndarray) -> None:
     transformed_frame = markers.apply_transformation(frame, matrix)
     transformed_frame = cv2.resize(transformed_frame, (cfg.WINDOW_WIDTH, cfg.WINDOW_HEIGHT))
 
-    # 2. Fingertip position detection (Position + Pressing status)
+    # Fingertip position detection (Position + Pressing status)
     fts = fingertips.detect(frame, matrix)
     
     # Get the hand mask from fingertip detection
     hand_mask = fingertips.get_hand_mask()
+    # blur the hand mask to reduce noise
+    hand_mask = cv2.GaussianBlur(hand_mask, (3, 3), 0)
     
-    # 3. Map fingertips to piano keys
+    # Map fingertips to piano keys
     piano.update(fts)
 
-    # 4. Draw the piano keys on a separate frame
+    # Draw the piano keys on a separate frame and get mask
     piano_frame = np.zeros_like(frame)
-    piano_frame = media.draw_keys(piano_frame, piano.keys)
+    piano_frame, key_mask = media.draw_keys(piano_frame, piano.keys)
     
     # Apply inverse transformation to get piano in original frame perspective
     untransformed_piano_frame = cv2.warpPerspective(piano_frame, np.linalg.inv(matrix), (frame.shape[1], frame.shape[0]))
+    untransformed_key_mask = cv2.warpPerspective(key_mask, np.linalg.inv(matrix), (frame.shape[1], frame.shape[0]))
     
-    # 5. Create the final composite by starting with the original frame
+    # Create the final composite by starting with the original frame
     final_frame = frame.copy()
     
-    # 6. Add the piano keys on top of the original frame, but only where there are no hands
-    # Create a binary mask where piano keys should be visible (where hand mask is 0)
-    piano_mask = cv2.bitwise_not(hand_mask)
-    
-    # Get the piano elements that should be visible (where there are no hands)
-    visible_piano = cv2.bitwise_and(untransformed_piano_frame, untransformed_piano_frame, mask=piano_mask)
-    
-    # Add the visible piano elements to the final frame
-    final_frame = cv2.add(final_frame, visible_piano)
+    # Add the piano keys on top of the original frame with proper masking
+    normalized_hand_mask = hand_mask.astype(np.float32) / 255.0
+
+    # Use the mask returned by draw_keys (after perspective transform)
+    key_mask_float = untransformed_key_mask.astype(np.float32)
+    key_mask_3ch = cv2.merge([key_mask_float, key_mask_float, key_mask_float])
+
+    # Convert hand mask to 3-channel
+    hand_mask_3ch = cv2.merge([normalized_hand_mask, normalized_hand_mask, normalized_hand_mask])
+
+    # Composite: show original frame where hands are present, otherwise show piano keys where drawn
+    final_frame = np.where(
+        hand_mask_3ch > 0.1,  # Where hands are present
+        frame.astype(np.float32),
+        np.where(
+            key_mask_3ch > 0.1,
+            untransformed_piano_frame.astype(np.float32),
+            frame.astype(np.float32)
+        )
+    ).astype(np.uint8)
     
     media.update(dt)
     

@@ -40,10 +40,12 @@ class MediaPlayback:
                     self.fs.noteoff(0, midi_note)
                     self.active_notes.remove(midi_note)
 
-    def draw_keys(self, frame: np.ndarray, notes: list[Note]) -> np.ndarray:
-        """Visualizes the pressed keys in a cv2 window."""
+    def draw_keys(self, frame: np.ndarray, notes: list[Note]) -> tuple[np.ndarray, np.ndarray]:
+        """Visualizes the pressed keys in a cv2 window and returns a mask of key locations."""
         natural_keys = [note for note in notes if "#" not in note.key]
         sharp_keys = [note for note in notes if "#" in note.key]
+
+        key_mask = np.zeros(frame.shape[:2], dtype=np.uint8)
 
         # Draw natural keys first
         for note in natural_keys:
@@ -56,13 +58,12 @@ class MediaPlayback:
                 int(note.center[1] + note.height // 2)
             )
 
-            color = (0, 255, 0) if note.last_activation else (255, 255, 255)
-            overlay = frame.copy()
-            cv2.rectangle(overlay, top_left, bottom_right, color, -1)
-            frame = cv2.addWeighted(overlay, 0.5, frame, 0.5, 0)
+            color = (0, 255, 0) if note.last_activation else (230, 230, 210)
+            cv2.rectangle(frame, top_left, bottom_right, color, -1)
+            cv2.rectangle(key_mask, top_left, bottom_right, 1, -1)
 
             border_color = (200, 200, 200)
-            cv2.rectangle(frame, top_left, bottom_right, border_color, 1)
+            cv2.rectangle(frame, top_left, bottom_right, border_color, 2)
 
         # Draw sharp keys on top of natural keys
         for note in sharp_keys:
@@ -75,9 +76,8 @@ class MediaPlayback:
                 int(note.center[1] + note.height // 2)
             )
 
-            color = (0, 255, 0) if note.last_activation else (0, 0, 0)
-            overlay = frame.copy()
-            cv2.rectangle(overlay, top_left, bottom_right, color, -1)
-            frame = cv2.addWeighted(overlay, 0.5, frame, 0.5, 0)
+            color = (0, 255, 0) if note.last_activation else (20, 20, 20)
+            cv2.rectangle(frame, top_left, bottom_right, color, -1)
+            cv2.rectangle(key_mask, top_left, bottom_right, 1, -1)
 
-        return cv2.flip(frame, 0) 
+        return cv2.flip(frame, 0), cv2.flip(key_mask, 0)
