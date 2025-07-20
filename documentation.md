@@ -1,4 +1,4 @@
-# Apparatus
+# 1 Apparatus
 
 <img src="docs/images/setup_sketch.png" alt="Setup sketch showing camera, piano area and user" width="80%" />
 
@@ -8,19 +8,19 @@ The Aruco markers should be placed anywhere in the area that the camera sees for
 As long as the camera can see all markers and is looking at them at a downward angle of roughly `45°`, the application will work as intended.  
 You can optionally place the markers at the corners of an actual piano, print a piano keyboard on a piece of paper, or simply use the application window as a reference (it draws a piano keyboard).
 
-# Pipeline
+# 2 Pipeline
 
 <img src="docs/images/pipeline.png" alt="Pipeline sketch" width="80%" />
 
-## Aruco Marker Detection
+## 2.1 Aruco Marker Detection
 
-## Hand Landmark Detection
+## 2.2 Hand Landmark Detection
 
-## Inverse Hand Landmark Perspective Transformation
+## 2.3 Inverse Hand Landmark Perspective Transformation
 
-## Fingertip to Key Mapping
+## 2.4 Fingertip to Key Mapping
 
-## Key Press Detection
+## 2.5 Key Press Detection
 
 <img src="docs/images/key_press_detection_demo.png" alt="Key press detection demo" width="30%" />
 
@@ -30,7 +30,7 @@ If a short distance delta followed by a long distance delta is detected, we assu
 Mediapipe does support 3D hand landmark detection which we tried extensively but it ultimately had too much noise and was not suitable to reliably track clicks.
 
 
-# Design Decisions
+# 3 Design Decisions
 
 TODO
 - why camera only
