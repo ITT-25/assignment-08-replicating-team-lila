@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from typing import Deque, List, Optional, Tuple
+import cv2
 import numpy as np
 from mediapipe.python.solutions.hands import Hands
+from mediapipe.python.solutions import drawing_utils
 import config as cfg
 from scipy.stats import linregress
 
@@ -19,12 +21,13 @@ class FingertipDetection:
             static_image_mode=False, max_num_hands=2, min_detection_confidence=0.4, min_tracking_confidence=0.4
         )
         self.fingertip_history: Deque[List[Fingertip]] = Deque(maxlen=cfg.SAMPLING_RATE // 4)
+        
 
 
     def detect(self, frame: np.ndarray, matrix: Optional[np.ndarray]) -> List[Fingertip]:
-        """Detects fingertips in the given frame."""
-        result = self.hands.process(frame)
-        if not result or not result.multi_hand_landmarks:
+        """Detects fingertips in the given frame and applies a perspective transform to their positions based on the provided matrix."""
+        original_result = self.hands.process(frame)
+        if not original_result or not original_result.multi_hand_landmarks:
             return []  # Return empty list if no hands detected
 
         fingertips: List[Fingertip] = []
@@ -32,20 +35,35 @@ class FingertipDetection:
         # The landmark indices for fingertips in MediaPipe hand model
         # 4=thumb, 8=index, 12=middle, 16=ring, 20=pinky
         fingertip_indices = [4, 8, 12, 16, 20]
+        
 
-        for hand_idx, (landmarks, world_landmarks, handedness) in enumerate(zip(result.multi_hand_landmarks, result.multi_hand_world_landmarks, result.multi_handedness)):
-            if not landmarks or not landmarks.landmark:
+        for hand_idx, (landmarks, world_landmarks, handedness) in enumerate(zip(original_result.multi_hand_landmarks, original_result.multi_hand_world_landmarks, original_result.multi_handedness)):
+            if not landmarks or not landmarks.landmark or not world_landmarks or not world_landmarks.landmark:
                 continue
+            
 
             for finger_idx, fingertip_idx in enumerate(fingertip_indices):
                 if fingertip_idx < len(landmarks.landmark):
                     landmark = landmarks.landmark[fingertip_idx]
                     world_landmark = world_landmarks.landmark[fingertip_idx]
+            
+                    drawing_utils.draw_landmarks(frame, landmarks)
 
                     # Convert normalized coordinates to pixel coordinates
                     x = int(landmark.x * frame.shape[1])
                     y = int(landmark.y * frame.shape[0])
                     z = world_landmark.z
+                    
+                    if matrix is not None:
+                        # Apply perspective transformation to (x, y)
+                        transformed_point = cv2.perspectiveTransform(
+                            np.array([[[x, y]]], dtype=np.float32), matrix
+                        )[0][0]
+                        x, y = int(transformed_point[0]), int(transformed_point[1])
+
+
+                    if fingertip_idx == 8:  # Index finger
+                        print(f"Index finger position: ({z})")
 
                     # Create consistent ID based on hand index and fingertip index
                     # Left hand: IDs 0-4, Right hand: IDs 5-9

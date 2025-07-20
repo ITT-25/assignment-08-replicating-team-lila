@@ -3,6 +3,8 @@ from typing import Optional, Tuple, List
 from dataclasses import dataclass
 from fingertip_detection import Fingertip
 import config
+import cv2
+import numpy as np
 
 @dataclass
 class Note:

@@ -16,10 +16,9 @@ class MediaPlayback:
         sfid = self.fs.sfload("implementation/steinway_concert_piano.sf2")
         self.fs.program_select(0, sfid, 0, 0)
 
-    def update(self, dt: float, frame: np.ndarray) -> None:
+    def update(self, dt: float) -> None:
         """Updates the media playback state."""
         self.play_notes(self.piano.keys)
-        self.visualize_keys(frame, self.piano.keys)
 
     def play_notes(self, notes: list[Note]) -> None:
         """Plays the given notes in a media player."""
@@ -41,7 +40,7 @@ class MediaPlayback:
                     self.fs.noteoff(0, midi_note)
                     self.active_notes.remove(midi_note)
 
-    def visualize_keys(self, frame: np.ndarray, notes: list[Note]) -> None:
+    def draw_keys(self, frame: np.ndarray, notes: list[Note]) -> np.ndarray:
         """Visualizes the pressed keys in a cv2 window."""
         natural_keys = [note for note in notes if "#" not in note.key]
         sharp_keys = [note for note in notes if "#" in note.key]
@@ -81,5 +80,4 @@ class MediaPlayback:
             cv2.rectangle(overlay, top_left, bottom_right, color, -1)
             frame = cv2.addWeighted(overlay, 0.5, frame, 0.5, 0)
 
-        cv2.imshow("Piano Keys", frame)
-        cv2.waitKey(1)
+        return cv2.flip(frame, 0) 

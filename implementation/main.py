@@ -19,22 +19,36 @@ media = MediaPlayback(piano)
 def capture_loop(dt: float, frame: np.ndarray) -> None:
     # 1. ArUco marker detection and perspective transformation
     mrks = markers.detect(frame)
-    if mrks is None:
-        print("Error: No markers detected.")
+    if len(mrks) < 4:
+        print(f"{len(mrks)}/4 markers")
         return
-    
+
     matrix = markers.get_transform_matrix(mrks, frame.shape[1], frame.shape[0])
+    
+
     transformed_frame = markers.apply_transformation(frame, matrix)
 
     transformed_frame = cv2.resize(transformed_frame, (cfg.WINDOW_WIDTH, cfg.WINDOW_HEIGHT))
-    transformed_frame = cv2.flip(transformed_frame, -1)
+    # transformed_frame = cv2.flip(transformed_frame, 1)
 
     # 2. Fingertip position detection (Position + Pressing status)
-    fts = fingertips.detect(transformed_frame, matrix)
-    
+    fts = fingertips.detect(frame, matrix)
+
     # 3. Map fingertips to piano keys
     piano.update(fts)
-    media.update(dt, transformed_frame)
+
+    # 4. Draw the piano on the original frame using the inverse matrix
+    piano_frame = np.zeros_like(frame)  # Create a blank frame for the piano
+    piano_frame = media.draw_keys(piano_frame, piano.keys)
+    untransformed_piano_frame = cv2.warpPerspective(piano_frame, np.linalg.inv(matrix), (frame.shape[1], frame.shape[0]))
+
+    # Overlay the untransformed piano frame onto the original frame
+    cv2.addWeighted(frame, 1, untransformed_piano_frame, 1, 0, frame)
+
+    media.update(dt)
+    
+    cv2.imshow("Overlay", frame)
+    cv2.waitKey(1)
 
 @click.command()
 @click.option("--video-id", "-c", default=1, help="Video ID")

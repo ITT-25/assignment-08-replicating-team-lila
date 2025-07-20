@@ -56,12 +56,8 @@ class MarkerDetection:
         return marker_data
 
 
-    def get_transform_matrix(self, markers: List[Tuple[int, int]], width: int, height: int) -> Optional[np.ndarray]:
+    def get_transform_matrix(self, markers: List[Tuple[int, int]], width: int, height: int) -> np.ndarray:
         """Calculates the perspective transformation matrix based on detected markers."""
-        if len(markers) < 4:
-            print(f"{len(markers)}/4 markers")
-            return None
-
         src_pts= np.float32(np.array([corners[1] for corners in markers]))
 
         src_pts = self.sort_markers(src_pts)
