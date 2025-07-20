@@ -12,13 +12,24 @@ You can optionally place the markers at the corners of an actual piano, print a 
 
 <img src="docs/images/pipeline.png" alt="Pipeline sketch" width="80%" />
 
+The pipeline in this sketch is simplified and shows only the core steps required.  
+Additional steps like frame layering or history tracking are not included but described below.
+
 ## 2.1 Aruco Marker Detection
+
+TODO: quickly explain the we use aruco markers to define the board area, also briefly touch on the measures we took to ensure that markers are detected reliably (indefinite marker caching)
 
 ## 2.2 Hand Landmark Detection
 
+TODO: describe how we use mediapipe to detect hand landmarks and that we extract only the fingertip and fingerbase positions for further processing
+
 ## 2.3 Inverse Hand Landmark Perspective Transformation
 
-## 2.4 Fingertip to Key Mapping
+TODO: describe how and why the hand landmarks are being transformed to the area defined by the markers.
+
+## 2.4 Fingertip to Key Mapping and Digital Piano Keyboard
+
+TODO: explain that the digital keyboard is mathematically defined and stretched to fit the area defined by the markers. Since (explained in 2.3) the hand landmarks are perspective transformed to that area as well we can simply compare the key positions with the fingertip positions to determine which key is pressed.
 
 ## 2.5 Key Press Detection
 
@@ -29,6 +40,9 @@ If a short distance delta followed by a long distance delta is detected, we assu
 
 Mediapipe does support 3D hand landmark detection which we tried extensively but it ultimately had too much noise and was not suitable to reliably track clicks.
 
+## 2.6 Debugging Frame Composition
+
+TODO: explain how the debug frame consists of the original frame overlayed with the keyboard and an additional masked overlay with only the hands to create a 3D effect.
 
 # 3 Design Decisions
 
