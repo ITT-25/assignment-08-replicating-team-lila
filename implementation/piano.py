@@ -98,49 +98,61 @@ class Piano:
                 if not fingertip_still_pressing:
                     key.last_activation = None
         
-        # Then, check for new activations
+        # check for new activations and prioritize the closest key for each fingertip
         for fingertip in fingertips:
             if not fingertip.is_pressed:
                 continue
-
-            for key in self.keys:
-                is_overlapping, pitch = self._get_overlap_data(fingertip, key)
-                if is_overlapping and key.last_activation is None:
-
-                    # If the key is a white key and overlaps a sharp one, skip this white key (to avoid activating both)
-                    if '#' not in key.key:
-                        for sk in self.sharp_keys:
-                            overlap, _ = self._get_overlap_data(fingertip, sk)
-                            if overlap:
-                                break
-
-                        # If it does not overlap a sharp one, activate the white key
-                        else:
-                            key.last_activation = (time.time(), fingertip)
-                            key.pitch = pitch
-                            break
-
-                    # If it's a sharp key, activate it immediately
-                    else:
-                        key.last_activation = (time.time(), fingertip)
-                        key.pitch = pitch
-                        break
-
-                # for key in self.keys:
-                #     is_overlapping, pitch = self._get_overlap_data(fingertip, key)
-                    
-                #     if is_overlapping and key.last_activation is None:
-                #         key.last_activation = (time.time(), fingertip)
-                #         key.pitch = pitch
+            
+            # Find the closest key for this fingertip
+            closest_key = None
+            closest_distance = float('inf')
+            closest_pitch = 1.0
+            
+            # First check sharp keys (priority since they're on top)
+            for key in self.sharp_keys:
+                if key.last_activation is None:  # Only consider keys that aren't already activated
+                    is_overlapping, pitch = self._get_overlap_data(fingertip, key)
+                    if is_overlapping:
+                        # Calculate distance to key center
+                        distance = ((fingertip.position[0] - key.center[0]) ** 2 + 
+                                   (fingertip.position[1] - key.center[1]) ** 2) ** 0.5
+                        
+                        if distance < closest_distance:
+                            closest_distance = distance
+                            closest_key = key
+                            closest_pitch = pitch
+            
+            # If no sharp key was found, check natural keys
+            if closest_key is None:
+                for key in self.natural_keys:
+                    if key.last_activation is None:  # Only consider keys that aren't already activated
+                        is_overlapping, pitch = self._get_overlap_data(fingertip, key)
+                        if is_overlapping:
+                            # Calculate distance to key center
+                            distance = ((fingertip.position[0] - key.center[0]) ** 2 + 
+                                      (fingertip.position[1] - key.center[1]) ** 2) ** 0.5
+                            
+                            if distance < closest_distance:
+                                closest_distance = distance
+                                closest_key = key
+                                closest_pitch = pitch
+            
+            # Activate the closest key if one was found
+            if closest_key is not None:
+                closest_key.last_activation = (time.time(), fingertip)
+                closest_key.pitch = closest_pitch
 
                 
     def _get_overlap_data(self, fingertip: Fingertip, key: Note) -> Tuple[bool, float]:
         """Checks if a fingertip overlaps with a piano key."""
+        # Calculate the distance from fingertip to key center
+        dx = abs(fingertip.position[0] - key.center[0])
+        dy = abs(fingertip.position[1] - key.center[1])
+        
+        # Check if the fingertip is within the key's boundaries
         overlap = (
-            fingertip.position[0] >= key.center[0] - key.width // 2 and
-            fingertip.position[0] <= key.center[0] + key.width // 2 and
-            fingertip.position[1] >= key.center[1] - key.height // 2 and
-            fingertip.position[1] <= key.center[1] + key.height // 2
+            dx <= key.width // 2 and
+            dy <= key.height // 2
         )
 
         if overlap:

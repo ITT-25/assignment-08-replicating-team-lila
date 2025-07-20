@@ -5,12 +5,17 @@ import numpy as np
 from mediapipe.python.solutions.hands import Hands
 from mediapipe.python.solutions import drawing_utils
 import config as cfg
-from scipy.stats import linregress
+
+
+# The landmark indices for fingertips and their bases in MediaPipe hand model
+# Each tuple: (base_idx, tip_idx)
+finger_landmark_pairs = [(1, 4), (5, 8), (9, 12), (13, 16), (17, 20)]
 
 @dataclass
 class Fingertip:
-    """Represents a fingertip with its position and pressing status."""
+    """Represents a fingertip with its position, base position, and pressing status."""
     position: Tuple[int, int, float]
+    base_position: Tuple[int, int]
     is_pressed: bool
     id: int
 
@@ -37,9 +42,6 @@ class FingertipDetection:
 
         fingertips: List[Fingertip] = []
 
-        # The landmark indices for fingertips in MediaPipe hand model
-        # 4=thumb, 8=index, 12=middle, 16=ring, 20=pinky
-        fingertip_indices = [4, 8, 12, 16, 20]
         
         # Generate hand mask from landmarks
         self._generate_hand_mask(frame, original_result.multi_hand_landmarks)
@@ -47,41 +49,49 @@ class FingertipDetection:
         for hand_idx, (landmarks, world_landmarks, handedness) in enumerate(zip(original_result.multi_hand_landmarks, original_result.multi_hand_world_landmarks, original_result.multi_handedness)):
             if not landmarks or not landmarks.landmark or not world_landmarks or not world_landmarks.landmark:
                 continue
-            
 
-            for finger_idx, fingertip_idx in enumerate(fingertip_indices):
-                if fingertip_idx < len(landmarks.landmark):
-                    landmark = landmarks.landmark[fingertip_idx]
-                    world_landmark = world_landmarks.landmark[fingertip_idx]
-            
+            for finger_idx, (base_idx, tip_idx) in enumerate(finger_landmark_pairs):
+                if tip_idx < len(landmarks.landmark) and base_idx < len(landmarks.landmark):
+                    tip_landmark = landmarks.landmark[tip_idx]
+                    tip_world_landmark = world_landmarks.landmark[tip_idx]
+                    base_landmark = landmarks.landmark[base_idx]
+
                     drawing_utils.draw_landmarks(frame, landmarks)
 
                     # Convert normalized coordinates to pixel coordinates
-                    x = int(landmark.x * frame.shape[1])
-                    y = int(landmark.y * frame.shape[0])
-                    z = world_landmark.z
+                    x = int(tip_landmark.x * frame.shape[1])
+                    y = int(tip_landmark.y * frame.shape[0])
+                    z = tip_world_landmark.z
                     
+                    # Get base position in pixel coordinates
+                    base_x = int(base_landmark.x * frame.shape[1])
+                    base_y = int(base_landmark.y * frame.shape[0])
+
                     if matrix is not None:
                         # Apply perspective transformation to (x, y)
                         transformed_point = cv2.perspectiveTransform(
                             np.array([[[x, y]]], dtype=np.float32), matrix
                         )[0][0]
                         x, y = int(transformed_point[0]), int(transformed_point[1])
-
-
-                    if fingertip_idx == 8:  # Index finger
-                        print(f"Index finger position: ({z})")
+                        
+                        # Apply perspective transformation to base position
+                        transformed_base = cv2.perspectiveTransform(
+                            np.array([[[base_x, base_y]]], dtype=np.float32), matrix
+                        )[0][0]
+                        base_x, base_y = int(transformed_base[0]), int(transformed_base[1])
 
                     # Create consistent ID based on hand index and fingertip index
                     # Left hand: IDs 0-4, Right hand: IDs 5-9
                     hand_offset = 0 if handedness.classification[0].label == "Left" else 5
                     unique_id = hand_offset + finger_idx
-                    
+
                     fingertips.append(Fingertip(
                         position=(x, y, z),
+                        base_position=(base_x, base_y),
                         is_pressed=False,
                         id=unique_id
                     ))
+
         self.fingertip_history.append(fingertips)
         for fingertip in fingertips:
             fingertip.is_pressed = self._detect_pressing_status(fingertip.id)
@@ -169,65 +179,46 @@ class FingertipDetection:
         return self.hand_mask
     
     def _detect_pressing_status(self, fingertip_id: int) -> bool:
-        """Detects fingertip pressing status based on patterns in z coordinate history."""
-        z_history: List[float] = []
-
-        for fingertips in self.fingertip_history:
-            for fingertip in fingertips:
+        """Detects fingertip pressing status using the pattern of x,y distance changes between base and tip."""
+        # Collect distance history for this fingertip
+        distance_history: List[float] = []
+        
+        # Look through history to find this fingertip's past positions
+        for frame_fingertips in self.fingertip_history:
+            for fingertip in frame_fingertips:
                 if fingertip.id == fingertip_id:
-                    z_history.append(fingertip.position[2])
-
-        if len(z_history) < self.fingertip_history.maxlen:
+                    tip_x, tip_y, _ = fingertip.position
+                    base_x, base_y = fingertip.base_position
+                    distance = np.sqrt((tip_x - base_x)**2 + (tip_y - base_y)**2)
+                    distance_history.append(distance)
+        
+        # Not enough history to make a determination
+        if len(distance_history) < 2:
+            # Get current distance and just use the static threshold
+            if distance_history:
+                current_distance = distance_history[-1]
+                return current_distance > cfg.PRESS_DISTANCE_THRESHOLD
             return False
-
-        # Smooth the z_history using a simple moving average
-        smoothed_z_history = np.convolve(z_history, np.ones(3)/3, mode='valid')
-
-        # positive z values indicate pressing (finger down), negative z values indicate hovering (finger up)
-        # Find the min z value and perform a linear regression in both directions to detect a full pressing pattern
-        min_index = np.argmin(smoothed_z_history)
-        left_max_index = max(min_index - 1, 0)
-        right_max_index = min(min_index + 1, len(smoothed_z_history) - 1)
-
-        # Find local maxima to the left and right
-        while left_max_index > 0 and smoothed_z_history[left_max_index - 1] >= smoothed_z_history[left_max_index]:
-            left_max_index -= 1
-
-        while right_max_index < len(smoothed_z_history) - 1 and smoothed_z_history[right_max_index + 1] >= smoothed_z_history[right_max_index]:
-            right_max_index += 1
-
-        # Ensure the segments have valid lengths
-        if left_max_index >= min_index or right_max_index <= min_index:
-            return False
-
-        max_value = max(smoothed_z_history[left_max_index], smoothed_z_history[right_max_index])
-        min_value = smoothed_z_history[min_index]
-
-        # Check if the difference between maximum and minimum is significant
-        if abs(max_value - smoothed_z_history[right_max_index]) > 0.01 or (max_value - min_value) < 0.01:
-            return False
-
-        # Perform linear regression on the two segments
-        left_segment_x = np.arange(min_index - left_max_index + 1)
-        left_segment_y = smoothed_z_history[left_max_index:min_index + 1]
-
-        if len(left_segment_x) != len(left_segment_y):
-            return False
-
-        left_slope, _, _, _, _ = linregress(left_segment_x, left_segment_y)
-
-        right_segment_x = np.arange(right_max_index - min_index + 1)
-        right_segment_y = smoothed_z_history[min_index:right_max_index + 1]
-
-        if len(right_segment_x) != len(right_segment_y):
-            return False
-
-        right_slope, _, _, _, _ = linregress(right_segment_x, right_segment_y)
-
-        # Check for smooth downward slope followed by smooth upward slope
-        # (negative left slope and positive right slope indicate pressing)
-        if left_slope < -0.0001 and right_slope > 0.0001:
-            return True
-
-        return False
+        
+        # Apply smoothing to reduce noise (if we have enough samples)
+        if len(distance_history) >= 3:
+            smoothed_distances = np.convolve(distance_history, np.ones(3)/3, mode="valid")
+        else:
+            smoothed_distances = np.array(distance_history)
+        
+        # Calculate distance velocity (positive = finger extending quickly)
+        # Make sure we have at least 2 elements before calculating velocity
+        if len(smoothed_distances) >= 2:
+            distance_velocity = smoothed_distances[-1] - smoothed_distances[-2]
+            current_distance = smoothed_distances[-1]
+            
+            # Detect a press when:
+            # 1. Current distance is above the threshold (finger is extended)
+            # 2. Distance is increasing rapidly (finger is being thrust forward)
+            return (current_distance > cfg.PRESS_DISTANCE_THRESHOLD and 
+                    distance_velocity > cfg.DISTANCE_VELOCITY_THRESHOLD)
+        else:
+            # Fallback to just checking the threshold if we can't calculate velocity
+            current_distance = smoothed_distances[-1]
+            return current_distance > cfg.PRESS_DISTANCE_THRESHOLD
 
