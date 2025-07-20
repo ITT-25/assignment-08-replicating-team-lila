@@ -95,46 +95,50 @@ class FingertipDetection:
         # Smooth the z_history using a simple moving average
         smoothed_z_history = np.convolve(z_history, np.ones(3)/3, mode='valid')
 
-        # Find the maximum and the first minimum to the left and right of the maximum
-        max_index = np.argmax(smoothed_z_history)
-        left_min_index = max(max_index - 1, 0)
-        right_min_index = min(max_index + 1, len(smoothed_z_history) - 1)
+        # positive z values indicate pressing (finger down), negative z values indicate hovering (finger up)
+        # Find the min z value and perform a linear regression in both directions to detect a full pressing pattern
+        min_index = np.argmin(smoothed_z_history)
+        left_max_index = max(min_index - 1, 0)
+        right_max_index = min(min_index + 1, len(smoothed_z_history) - 1)
 
-        while left_min_index > 0 and smoothed_z_history[left_min_index - 1] <= smoothed_z_history[left_min_index]:
-            left_min_index -= 1
+        # Find local maxima to the left and right
+        while left_max_index > 0 and smoothed_z_history[left_max_index - 1] >= smoothed_z_history[left_max_index]:
+            left_max_index -= 1
 
-        while right_min_index < len(smoothed_z_history) - 1 and smoothed_z_history[right_min_index + 1] <= smoothed_z_history[right_min_index]:
-            right_min_index += 1
+        while right_max_index < len(smoothed_z_history) - 1 and smoothed_z_history[right_max_index + 1] >= smoothed_z_history[right_max_index]:
+            right_max_index += 1
 
-        # Ensure the segments have valid lengths and check thresholds
-        if left_min_index >= max_index or right_min_index <= max_index:
+        # Ensure the segments have valid lengths
+        if left_max_index >= min_index or right_max_index <= min_index:
             return False
 
-        min_value = min(smoothed_z_history[left_min_index], smoothed_z_history[right_min_index])
-        max_value = smoothed_z_history[max_index]
+        max_value = max(smoothed_z_history[left_max_index], smoothed_z_history[right_max_index])
+        min_value = smoothed_z_history[min_index]
 
-        if abs(min_value - smoothed_z_history[right_min_index]) > 0.01 or (max_value - min_value) < 0.01:
+        # Check if the difference between maximum and minimum is significant
+        if abs(max_value - smoothed_z_history[right_max_index]) > 0.01 or (max_value - min_value) < 0.01:
             return False
 
         # Perform linear regression on the two segments
-        left_segment_x = np.arange(max_index - left_min_index + 1)
-        left_segment_y = smoothed_z_history[left_min_index:max_index + 1]
+        left_segment_x = np.arange(min_index - left_max_index + 1)
+        left_segment_y = smoothed_z_history[left_max_index:min_index + 1]
 
         if len(left_segment_x) != len(left_segment_y):
             return False
 
         left_slope, _, _, _, _ = linregress(left_segment_x, left_segment_y)
 
-        right_segment_x = np.arange(right_min_index - max_index + 1)
-        right_segment_y = smoothed_z_history[max_index:right_min_index + 1]
+        right_segment_x = np.arange(right_max_index - min_index + 1)
+        right_segment_y = smoothed_z_history[min_index:right_max_index + 1]
 
         if len(right_segment_x) != len(right_segment_y):
             return False
 
         right_slope, _, _, _, _ = linregress(right_segment_x, right_segment_y)
 
-        # Check for smooth upward slope followed by smooth downward slope
-        if left_slope > 0.0001 and right_slope < -0.0001:
+        # Check for smooth downward slope followed by smooth upward slope
+        # (negative left slope and positive right slope indicate pressing)
+        if left_slope < -0.0001 and right_slope > 0.0001:
             return True
 
         return False
