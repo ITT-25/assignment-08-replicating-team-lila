@@ -31,3 +31,7 @@ Mediapipe does support 3D hand landmark detection which we tried extensively but
 
 
 # Design Decisions
+
+TODO
+- why camera only
+- why not perspective transform before fingertip detection
