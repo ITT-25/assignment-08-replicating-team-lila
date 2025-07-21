@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from piano import Note, Piano
 import fluidsynth
+import math
 
 
 class MediaPlayback:
@@ -10,15 +11,22 @@ class MediaPlayback:
     def __init__(self, piano: Piano):
         self.piano = piano
         self.active_notes = set()
+        self.note_channels = {}  # maps midi_note -> channel
+        self.available_channels = list(range(16))  # fluidsynth default = 16 channels
+
+
         self.fs = fluidsynth.Synth()
         self.fs.start(driver="dsound", midi_driver=None)
-
         sfid = self.fs.sfload("implementation/steinway_concert_piano.sf2")
-        self.fs.program_select(0, sfid, 0, 0)
+        
+        # Set same instrument for all channels
+        for ch in range(16):
+            self.fs.program_select(ch, sfid, 0, 0)
 
     def update(self, dt: float) -> None:
         """Updates the media playback state."""
         self.play_notes(self.piano.keys)
+        self.apply_pitch_bend(self.piano.keys)
 
     def play_notes(self, notes: list[Note]) -> None:
         """Plays the given notes in a media player."""
@@ -33,12 +41,52 @@ class MediaPlayback:
             
             if note.last_activation is not None:
                 if midi_note not in self.active_notes:
-                    self.fs.noteon(0, midi_note, 30)
+                    # Assign an available channel
+                    if not self.available_channels:
+                        continue  # no free channel (ignore note or handle polyphony limit)
+                    channel = self.available_channels.pop(0)
+                    self.note_channels[midi_note] = channel
+
+                    self.fs.noteon(channel, midi_note, 30)
                     self.active_notes.add(midi_note)
             elif note.last_activation is None:
                 if midi_note in self.active_notes:
-                    self.fs.noteoff(0, midi_note)
+                    channel = self.note_channels.get(midi_note, 0)
+                    self.fs.noteoff(channel, midi_note)
+
+                    # Reset pitch bend and free channel
+                    self.fs.pitch_bend(channel, 8192)
+                    self.available_channels.append(channel)
+                    del self.note_channels[midi_note]
+
                     self.active_notes.remove(midi_note)
+
+    def apply_pitch_bend(self, notes: list[Note]) -> None:
+        for note in notes:
+            if note.last_activation is not None:
+                octave = note.octave + 1
+                key = note.key
+                midi_note = 36 + 12 * octave + {
+                    'C': 0, 'C#': 1, 'D': 2, 'D#': 3,
+                    'E': 4, 'F': 5, 'F#': 6, 'G': 7,
+                    'G#': 8, 'A': 9, 'A#': 10, 'H': 11
+                }[key]
+
+                if midi_note in self.note_channels:
+                    channel = self.note_channels[midi_note]
+                    bend_value = self.calculate_pitch_bend(note.pitch, bend_range=12)
+                    self.fs.pitch_bend(channel, bend_value)
+
+    def calculate_pitch_bend(self, pitch: float, bend_range: float = 2.0) -> int:
+        """
+        Converts a pitch multiplier to a MIDI pitch bend value.
+        :param pitch: The pitch multiplier (1.0 = normal, >1 higher, <1 lower).
+        :param bend_range: Max pitch bend range in semitones (+/-).
+        """
+        print(str(pitch))
+        semitone_offset = 12 * math.log2(pitch)  # Convert ratio to semitones
+        bend = int(8192 + (semitone_offset / bend_range) * 8192)
+        return max(0, min(16383, bend))  # Clamp to valid MIDI range
 
     def draw_keys(self, frame: np.ndarray, notes: list[Note]) -> tuple[np.ndarray, np.ndarray]:
         """Visualizes the pressed keys in a cv2 window and returns a mask of key locations."""

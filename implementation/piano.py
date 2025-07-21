@@ -170,4 +170,8 @@ class Piano:
     def _map_y_delta_to_pitch(self, y_delta: int, direction: int) -> float:
         """Maps the y_delta to a pitch value."""
         # Simple mapping: larger y_delta results in higher pitch
-        return 1.0 + (y_delta / 100.0) * direction
+        if direction > 0:
+            return 1.0 + (y_delta / 100.0)
+        else:
+            a = 1.0 - (y_delta / 100.0)
+            return a if a >= 0 else 0.1
