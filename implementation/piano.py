@@ -174,4 +174,4 @@ class Piano:
             return 1.0 + (y_delta / 100.0)
         else:
             a = 1.0 - (y_delta / 100.0)
-            return a if a >= 0 else 0.1
+            return a if a > 0 else 0.1
