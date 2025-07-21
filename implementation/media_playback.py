@@ -22,16 +22,12 @@ class MediaPlayback:
         # Set same instrument for all channels
         for ch in range(16):
             self.fs.program_select(ch, sfid, 0, 0)
-            # self.fs.cc(ch, 101, 0)
-            # self.fs.cc(ch, 100, 0)
             self.fs.cc(ch, 6, 24)  # +/- 12 semitones
-            # self.fs.cc(ch, 38, 0)
 
     def update(self, dt: float) -> None:
         """Updates the media playback state."""
         self.play_notes(self.piano.keys)
-        self.apply_pitch_bend(self.piano.keys)
-        self.apply_vibrato(self.piano.keys)
+        self.apply_pitch_control(self.piano.keys)
 
     def play_notes(self, notes: list[Note]) -> None:
         """Plays the given notes in a media player."""
@@ -66,7 +62,7 @@ class MediaPlayback:
 
                     self.active_notes.remove(midi_note)
 
-    def apply_pitch_bend(self, notes: list[Note]) -> None:
+    def apply_pitch_control(self, notes: list[Note]) -> None:
         for note in notes:
             if note.last_activation is not None:
                 octave = note.octave + 1
@@ -79,26 +75,14 @@ class MediaPlayback:
 
                 if midi_note in self.note_channels:
                     channel = self.note_channels[midi_note]
-                    bend_value = self.calculate_pitch_bend(note.pitch_y, bend_range=12)
-                    bend_value -= 8192  # Convert to relative value
-                    self.fs.pitch_bend(channel, bend_value)
+                    bend_value_y = self.calculate_pitch_bend(note.pitch_y, bend_range=12)
+                    bend_value_y -= 8192
+                    self.fs.pitch_bend(channel, bend_value_y)
 
-    def apply_vibrato(self, notes: list[Note]) -> None:
-        for note in notes:
-            if note.last_activation is not None:
-                octave = note.octave + 1
-                key = note.key
-                midi_note = 36 + 12 * octave + {
-                    'C': 0, 'C#': 1, 'D': 2, 'D#': 3,
-                    'E': 4, 'F': 5, 'F#': 6, 'G': 7,
-                    'G#': 8, 'A': 9, 'A#': 10, 'H': 11
-                }[key]
+                    bend_value_x = self.calculate_pitch_bend(note.pitch_x, bend_range=12)
+                    bend_value_x -= 8192
+                    self.fs.pitch_bend(channel, bend_value_x)
 
-                if midi_note in self.note_channels:
-                    channel = self.note_channels[midi_note]
-                    bend_value = self.calculate_pitch_bend(note.pitch_x, bend_range=2)
-                    bend_value -= 8192  # Convert to relative value
-                    self.fs.pitch_bend(channel, bend_value)
 
     def calculate_pitch_bend(self, pitch: float, bend_range: float = 2.0) -> int:
         """
