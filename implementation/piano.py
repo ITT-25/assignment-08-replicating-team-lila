@@ -11,7 +11,8 @@ class Note:
     """Represents a musical note with pitch and key."""
     key: str
     octave: int
-    pitch: float = 1.0
+    pitch_y: float = 1.0
+    pitch_x: float = 1.0
     last_activation: Optional[Tuple[float, Fingertip]] = None
     center: Tuple[int, int] = (0, 0)
     width: int = 70
@@ -87,10 +88,11 @@ class Piano:
                 fingertip_still_pressing = False
                 for fingertip in fingertips:
                     if (fingertip.id == activating_fingertip.id):
-                        is_overlapping, pitch = self._get_overlap_data(fingertip, key)
+                        is_overlapping, pitch_y, pitch_x = self._get_overlap_data(fingertip, key)
                         if is_overlapping:
                             fingertip_still_pressing = True
-                            key.pitch = pitch
+                            key.pitch_y = pitch_y
+                            key.pitch_x = pitch_x
                         break
                 
                 # If the activating fingertip is no longer pressing, deactivate the key
@@ -110,7 +112,7 @@ class Piano:
             # First check sharp keys (priority since they're on top)
             for key in self.sharp_keys:
                 if key.last_activation is None:  # Only consider keys that aren't already activated
-                    is_overlapping, pitch = self._get_overlap_data(fingertip, key)
+                    is_overlapping, pitch_y, pitch_x = self._get_overlap_data(fingertip, key)
                     if is_overlapping:
                         # Calculate distance to key center
                         distance = ((fingertip.position[0] - key.center[0]) ** 2 + 
@@ -119,13 +121,14 @@ class Piano:
                         if distance < closest_distance:
                             closest_distance = distance
                             closest_key = key
-                            closest_pitch = pitch
+                            closest_pitch_y = pitch_y
+                            closest_pitch_x = pitch_x
             
             # If no sharp key was found, check natural keys
             if closest_key is None:
                 for key in self.natural_keys:
                     if key.last_activation is None:  # Only consider keys that aren't already activated
-                        is_overlapping, pitch = self._get_overlap_data(fingertip, key)
+                        is_overlapping, pitch_y, pitch_x = self._get_overlap_data(fingertip, key)
                         if is_overlapping:
                             # Calculate distance to key center
                             distance = ((fingertip.position[0] - key.center[0]) ** 2 + 
@@ -134,12 +137,14 @@ class Piano:
                             if distance < closest_distance:
                                 closest_distance = distance
                                 closest_key = key
-                                closest_pitch = pitch
+                                closest_pitch_y = pitch_y
+                                closest_pitch_x = pitch_x
             
             # Activate the closest key if one was found
             if closest_key is not None:
                 closest_key.last_activation = (time.time(), fingertip)
-                closest_key.pitch = closest_pitch
+                closest_key.pitch_y = closest_pitch_y
+                closest_key.pitch_x = closest_pitch_x
 
                 
     def _get_overlap_data(self, fingertip: Fingertip, key: Note) -> Tuple[bool, float]:
@@ -157,22 +162,27 @@ class Piano:
         if overlap:
             # Use the key's center as the reference point for pitch calculation
             relative_center = key.last_activation[1].position if key.last_activation else key.center
+
             y_delta = fingertip.position[1] - relative_center[1]
-            pitch_direction = 1 if y_delta < 0 else -1
+            pitch_direction_y = 1 if y_delta < 0 else -1
             y_delta = abs(y_delta)
-
             # Map the y_delta to a pitch value
-            pitch = self._map_y_delta_to_pitch(y_delta, pitch_direction, key)
-            # print(pitch)
-            return True, pitch
+            pitch_y = self._map_y_delta_to_pitch(key.height, y_delta, pitch_direction_y, key)
+ 
+            x_delta = fingertip.position[0] - relative_center[0]
+            pitch_direction_x = 1 if x_delta < 0 else -1
+            x_delta = abs(x_delta)
+            pitch_x = self._map_y_delta_to_pitch(key.width, x_delta, pitch_direction_x, key)
 
-        return False, 1.0
+            return True, pitch_y, pitch_x
 
-    def _map_y_delta_to_pitch(self, y_delta: int, direction: int, key: Note) -> float:
+        return False, 1.0, 1.0
+
+    def _map_y_delta_to_pitch(self, dimension, y_delta: int, direction: int, key: Note) -> float:
         """Maps the y_delta to a pitch value."""
         # Simple mapping: larger y_delta results in higher pitch
         if direction > 0:
-            return 1.0 + (y_delta / key.height)
+            return 1.0 + (y_delta / dimension)
         else:
-            a = 1.0 - (y_delta / key.height)
+            a = 1.0 - (y_delta / dimension)
             return a if a > 0 else 0.1
