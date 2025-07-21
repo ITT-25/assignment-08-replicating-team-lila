@@ -22,6 +22,10 @@ class MediaPlayback:
         # Set same instrument for all channels
         for ch in range(16):
             self.fs.program_select(ch, sfid, 0, 0)
+            # self.fs.cc(ch, 101, 0)
+            # self.fs.cc(ch, 100, 0)
+            self.fs.cc(ch, 6, 24)  # +/- 12 semitones
+            # self.fs.cc(ch, 38, 0)
 
     def update(self, dt: float) -> None:
         """Updates the media playback state."""
@@ -47,7 +51,7 @@ class MediaPlayback:
                     channel = self.available_channels.pop(0)
                     self.note_channels[midi_note] = channel
 
-                    self.fs.noteon(channel, midi_note, 30)
+                    self.fs.noteon(channel, midi_note, 70)
                     self.active_notes.add(midi_note)
             elif note.last_activation is None:
                 if midi_note in self.active_notes:
@@ -75,6 +79,8 @@ class MediaPlayback:
                 if midi_note in self.note_channels:
                     channel = self.note_channels[midi_note]
                     bend_value = self.calculate_pitch_bend(note.pitch, bend_range=12)
+                    bend_value -= 8192  # Convert to relative value
+                    print(bend_value)
                     self.fs.pitch_bend(channel, bend_value)
 
     def calculate_pitch_bend(self, pitch: float, bend_range: float = 2.0) -> int:
@@ -83,7 +89,7 @@ class MediaPlayback:
         :param pitch: The pitch multiplier (1.0 = normal, >1 higher, <1 lower).
         :param bend_range: Max pitch bend range in semitones (+/-).
         """
-        print(str(pitch))
+        # print(str(pitch))
         semitone_offset = 12 * math.log2(pitch)  # Convert ratio to semitones
         bend = int(8192 + (semitone_offset / bend_range) * 8192)
         return max(0, min(16383, bend))  # Clamp to valid MIDI range
