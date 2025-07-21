@@ -86,13 +86,12 @@ class Piano:
                 # Check if the activating fingertip is still pressing this key
                 fingertip_still_pressing = False
                 for fingertip in fingertips:
-                    if (fingertip.id == activating_fingertip.id and 
-                        fingertip.is_pressed):
+                    if (fingertip.id == activating_fingertip.id):
                         is_overlapping, pitch = self._get_overlap_data(fingertip, key)
                         if is_overlapping:
                             fingertip_still_pressing = True
                             key.pitch = pitch
-                            break
+                        break
                 
                 # If the activating fingertip is no longer pressing, deactivate the key
                 if not fingertip_still_pressing:
