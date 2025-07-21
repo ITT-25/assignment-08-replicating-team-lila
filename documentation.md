@@ -25,7 +25,7 @@ We use ArUco markers to define the boundaries of the keyboard area. To ensure ro
 
 ## 3.2 Hand Landmark Detection
 
-TODO: describe how we use mediapipe to detect hand landmarks and that we extract only the fingertip and fingerbase positions for further processing
+Hand landmarks are detected using the MediaPipe framework, which supports tracking both hands at the same time. For the purpose of identifying key presses, only the fingertip and the finger base coordinates are extracted from the tracking data (see [3.5](#35-key-press-detection)).
 
 ## 3.3 Inverse Hand Landmark Perspective Transformation
 
@@ -48,7 +48,7 @@ Mediapipe does support 3D hand landmark detection which we tried extensively but
 
 ## 3.6 Media Playback
 
-TODO: explain that we used fluidsynth and a piano soundfont (which perhaps we should change to an instrument with continuous pitch, since pitch bending and vibratos dont really make sense for pianos)
+Sound is generated using the FluidSynth software synthesizer, which plays back instrument samples from a SoundFont 2 file. While pitch bends and vibratos are typically limited to acoustic instruments with continuous pitch (such as wind or string instruments), our approach can simulate expressive pitch control with any instrument represented in a SoundFont 2 file.
 
 ## 3.7 Debugging Frame Composition
 
