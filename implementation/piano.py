@@ -21,9 +21,11 @@ class Note:
 class Piano:
     """Maps fingertip positions to piano keys."""
     
-    def __init__(self, num_octaves: int = 2, pitch_range: Tuple[float, float] = (0.5, 2.0)):
+    def __init__(self, num_octaves: int = 2, pitch_range: Tuple[float, float] = (0.5, 2.0), vibrato_thresh_x: float = 20.0, vibrato_thresh_y: float = 50.0):
         self.num_octaves: int = num_octaves
         self.pitch_range: Tuple[float, float] = pitch_range
+        self.vibrato_thresh_x: float = vibrato_thresh_x
+        self.vibrato_thresh_y: float = vibrato_thresh_y
         config.WINDOW_WIDTH = Note.width * self.num_octaves * 7
         config.WINDOW_HEIGHT = int(config.WINDOW_WIDTH // 1.77)
         self.keys: List[Note] = self._generate_keys()
@@ -167,18 +169,22 @@ class Piano:
             pitch_direction_y = 1 if y_delta < 0 else -1
             y_delta = abs(y_delta)
             # Map the y_delta to a pitch value
-            pitch_y = self._map_y_delta_to_pitch(key.height, y_delta, pitch_direction_y, key)
+            pitch_y = self._map_delta_to_pitch(key.height, y_delta, pitch_direction_y, key)
  
             x_delta = fingertip.position[0] - relative_center[0]
             pitch_direction_x = 1 if x_delta < 0 else -1
             x_delta = abs(x_delta)
-            pitch_x = self._map_y_delta_to_pitch(key.width, x_delta, pitch_direction_x, key)
+            print(y_delta)
+            if y_delta < self.vibrato_thresh_y and x_delta > self.vibrato_thresh_x:
+                pitch_x = self._map_delta_to_pitch(key.width, x_delta, pitch_direction_x, key)
+            else:
+                pitch_x = 1.0
 
             return True, pitch_y, pitch_x
 
         return False, 1.0, 1.0
 
-    def _map_y_delta_to_pitch(self, dimension, y_delta: int, direction: int, key: Note) -> float:
+    def _map_delta_to_pitch(self, dimension, y_delta: int, direction: int, key: Note) -> float:
         """Maps the y_delta to a pitch value."""
         # Simple mapping: larger y_delta results in higher pitch
         if direction > 0:
