@@ -75,13 +75,9 @@ class MediaPlayback:
 
                 if midi_note in self.note_channels:
                     channel = self.note_channels[midi_note]
-                    bend_value_y = self.calculate_pitch_bend(note.pitch_y, bend_range=12)
-                    bend_value_y -= 8192
-                    self.fs.pitch_bend(channel, bend_value_y)
-
-                    bend_value_x = self.calculate_pitch_bend(note.pitch_x, bend_range=12)
-                    bend_value_x -= 8192
-                    self.fs.pitch_bend(channel, bend_value_x)
+                    bend_value = self.calculate_pitch_bend(note.pitch, bend_range=12)
+                    bend_value -= 8192
+                    self.fs.pitch_bend(channel, bend_value)
 
 
     def calculate_pitch_bend(self, pitch: float, bend_range: float = 2.0) -> int:
