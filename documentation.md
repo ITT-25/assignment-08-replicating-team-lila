@@ -50,7 +50,13 @@ Mediapipe does support 3D hand landmark detection which we tried extensively but
 
 Sound is generated using the FluidSynth software synthesizer, which plays back instrument samples from a SoundFont 2 file. While pitch bends and vibratos are typically limited to acoustic instruments with continuous pitch (such as wind or string instruments), our approach can simulate expressive pitch control with any instrument represented in a SoundFont 2 file.
 
-## 3.7 Debugging Frame Composition
+## 3.7 Pitch Control
+
+Pitch bends are triggered by moving a finger along the y-axis while pressing a key. Sliding the finger upwards increases the pitch, sliding downward decreases it. To avoid accidental triggers, the vertical movement must exceed a defined threshold.
+
+Vibrato is triggered by rapidly moving a finger along the x-axis while keeping it on the key. This causes the pitch to oscillate (or *"wiggle"*). To prevent unintended triggers, movement must exceed defined thresholds along both the x and y-axes.
+
+## 3.8 Debugging Frame Composition
 
 TODO: explain how the debug frame consists of the original frame overlayed with the keyboard and an additional masked overlay with only the hands to create a 3D effect.
 
