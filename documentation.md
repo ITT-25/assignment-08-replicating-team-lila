@@ -42,7 +42,7 @@ TODO: explain that the digital keyboard is mathematically defined and stretched 
 <img src="docs/images/key_press_detection_demo.png" alt="Key press detection demo" width="30%" />
 
 The blue arrows indicate the distance delta that we use to detect if a piano key is pressed or not.  
-If a short distance delta followed by a long distance delta is detected, we assume that the key was pressed because the distance gets shorter when the user lifts their finger thanks to the camera angle. This method is not ideal but suffices for a proof of concept; in a real application more camera angles, capacitive sensors or other methods would be used to detect key presses more reliably.
+If a short distance delta followed by a long distance delta is detected, we assume that the key was pressed because the distance gets shorter when the user lifts their finger thanks to the camera angle. This method is not ideal but suffices for a proof of concept; in a real application additional camera angles, capacitive sensors or other methods would be used to detect key presses more reliably.
 
 Mediapipe does support 3D hand landmark detection which we tried extensively but it ultimately had too much noise and was not suitable to reliably track clicks.
 
