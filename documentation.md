@@ -21,7 +21,7 @@ Additional steps like frame layering or history tracking are not included but de
 
 ## 3.1 ArUco Marker Detection
 
-We use ArUco markers to define the boundaries of the keyboard area. To ensure robust detection even when markers are temporarily obscured or out of view, we implemented indefinite marker caching, preserving the last known positions to maintain application stability. The markers are sorted consistently to ensure that the digital keyboard is always displayed in the correct orientation, regardless of the physical arrangement of the markers.
+We use ArUco markers to define the boundaries of the keyboard area. To ensure robust detection even when markers are temporarily obscured or out of view, we implemented indefinite marker caching, preserving the last known positions to maintain application stability.
 
 ## 3.2 Hand Landmark Detection
 
@@ -33,9 +33,7 @@ TODO: describe how and why the hand landmarks are being transformed to the area 
 
 ## 3.4 Fingertip to Key Mapping and Digital Piano Keyboard
 
-TODO: explain that the digital keyboard is mathematically defined and stretched to fit the area defined by the markers. Since (explained in 3.3) the hand landmarks are perspective transformed to that area as well we can simply compare the key positions with the fingertip positions to determine which key is pressed.
-
-
+Using the area defined by the ArUco markers, the digital keyboard automatically builds itself with the given number of octaves. The position of the keyboard continuously updates itself as well as its size depending on the ArUco markers, making it possible to put the markers closer or farther away in order to scale the keyboard accordingly. Since the hand landmarks are perspective transformed to the keyboard area (see [3.3](#33-inverse-hand-landmark-perspective-transformation)), simply reading out the fingertip coordinates and comparing them to the piano key coordinates allows us to determine whether a fingertip is within the boundaries of a key.
 
 ## 3.5 Key Press Detection
 
@@ -49,6 +47,8 @@ Mediapipe does support 3D hand landmark detection which we tried extensively but
 ## 3.6 Media Playback
 
 Sound is generated using the FluidSynth software synthesizer, which plays back instrument samples from a SoundFont 2 file. While pitch bends and vibratos are typically limited to acoustic instruments with continuous pitch (such as wind or string instruments), our approach can simulate expressive pitch control with any instrument represented in a SoundFont 2 file.
+
+Played notes are assigned to their own MIDI channel, which can then be manipulated in terms of pitch. Once the note has finished playing, that MIDI channel is freed for other sounds. This allows for 16 notes to be played and pitched simultaneously.
 
 ## 3.7 Pitch Control
 
