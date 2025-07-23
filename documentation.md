@@ -1,6 +1,15 @@
 # 1 Decision Process
 
-To find a suitable paper, we browsed the Journal Club forum in GRIPS and assessed which projects could realistically be completed within two weeks using the knowledge and hardware we had available. Ultimately, we chose *The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard* by McPherson et al [[1]](#references). This paper explores the addition of expressive pitch control such as pitch bends and vibratos to piano keyboards. McPherson et al. achieved this by adding capacitive touch sensors to the keys, allowing finger position and movement to modulate pitch. Considering the concepts we had learned in class, we felt confident that we could reconstruct the project using a computer vision-based approach.
+# 1.1 Paper Selection
+
+To find a suitable paper, we browsed the Journal Club forum in GRIPS and assessed which projects could realistically be completed within two weeks using the knowledge and hardware we had available. Ultimately, we chose *The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard* by McPherson et al [[1]](#references). This paper explores the addition of expressive pitch control such as pitch bends and vibratos to piano keyboards. McPherson et al. achieved this by adding capacitive touch sensors to the keys, allowing finger position and movement to modulate pitch.
+
+## 1.2 CV-Based Approach instead of Capacitive Sensors
+
+We wanted to have a minimal setup that can be used with minimal hardware requirements and a simple setup.  
+Webcams and printed aruco markers are widely available and easy to set up, making them a good choice for our idea.
+
+We purposely chose to slightly alter the approach from the paper by using a CV-based method instead of capacitive sensors. This makes the application more accessible and combines several concepts learned during the ITT course.
 
 # 2 Apparatus
 
@@ -26,6 +35,10 @@ We use ArUco markers to define the boundaries of the keyboard area. To ensure ro
 ## 3.2 Hand Landmark Detection
 
 Hand landmarks are detected using the MediaPipe framework, which supports tracking both hands at the same time. For the purpose of identifying key presses, only the fingertip and the finger base coordinates are extracted from the tracking data (see [3.5](#35-key-press-detection)).
+
+From the detected hand landmarks, we extract only the landmark data for the base and tip of each finger `(4, 1),(8, 5), (12, 9),(16, 13), (20, 17)`.
+
+<img src="https://chuoling.github.io/mediapipe/images/mobile/hand_landmarks.png" alt="Pipeline sketch" width="40%" />
 
 ## 3.3 Inverse Hand Landmark Perspective Transformation
 
@@ -59,15 +72,9 @@ Vibrato is triggered by rapidly moving a finger along the x-axis while keeping i
 - the y-axis movement must stay below a maximum threshold
 - the motion must occur within a short time window
 
-## 3.8 Debugging Frame Composition
+## 3.8 Debugging Frame
 
-TODO: explain how the debug frame consists of the original frame overlayed with the keyboard and an additional masked overlay with only the hands to create a 3D effect.
-
-# 4 Design Decisions
-
-TODO
-- why camera only
-- why not perspective transform before fingertip detection
+The dbugging frame that is displayed in the application window, unlike the application logic, does not use the perspective transformation. It shows exactly what the camera sees but uses the inverse projection matrix from the markers to draw the digital piano keyboard as an overlay. To improve the visual quality the hands are masked and overlayed on top of the piano visualization. This allows for a clear view of the piano keys and the hands.
 
 # References
 
