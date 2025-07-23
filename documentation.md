@@ -54,7 +54,10 @@ Sound is generated using the FluidSynth software synthesizer, which plays back i
 
 Pitch bends are triggered by moving a finger along the y-axis while pressing a key. Sliding the finger upwards increases the pitch, sliding downward decreases it. To avoid accidental triggers, the vertical movement must exceed a defined threshold.
 
-Vibrato is triggered by rapidly moving a finger along the x-axis while keeping it on the key. This causes the pitch to oscillate (or *"wiggle"*). To prevent unintended triggers, movement must exceed defined thresholds along both the x and y-axes.
+Vibrato is triggered by rapidly moving a finger along the x-axis while keeping it on the key. This causes the pitch to oscillate (or *"wiggle"*). To prevent unintended triggers, several conditions must be met:
+- the x-axis movement must exceed a minimum amplitude
+- the y-axis movement must stay below a maximum threshold
+- the motion must occur within a short time window
 
 ## 3.8 Debugging Frame Composition
 
