@@ -78,6 +78,8 @@ The dbugging frame that is displayed in the application window, unlike the appli
 
 # References
 
-[1] Oliwia Sowińska, Anna Kubczak, Julia Dominiak, Natalia Walczak, and Laurent Babout. 2023. Foot-Based Game Controller to Improve Interaction between Participants. In Companion Proceedings of the Annual Symposium on Computer-Human Interaction in Play (CHI PLAY Companion '23). Association for Computing Machinery, New York, NY, USA, 196–201. https://doi.org/10.1145/3573382.3616098
-[2] Zheer Xu, Yankang Meng, Xiaojun Bi, and Xing-Dong Yang. 2022. Phrase-Gesture Typing on Smartphones. In Proceedings of the 35th Annual ACM Symposium on User Interface Software and Technology (UIST '22). Association for Computing Machinery, New York, NY, USA, Article 55, 1–11. https://doi.org/10.1145/3526113.3545683
+[1] Sowińska, O., Kubczak, A., Dominiak, J., Walczak, N., and Babout, L. (2023). Foot-Based Game Controller to Improve Interaction between Participants. In *Companion Proceedings of the Annual Symposium on Computer-Human Interaction in Play* (CHI PLAY Companion '23). Association for Computing Machinery, New York, NY, USA, 196–201. https://doi.org/10.1145/3573382.3616098
+
+[2] Xu, Z., Meng, Y., Bi, X., and Yang, X. (2022). Phrase-Gesture Typing on Smartphones. In *Proceedings of the 35th Annual ACM Symposium on User Interface Software and Technology* (UIST '22). Association for Computing Machinery, New York, NY, USA, Article 55, 1–11. https://doi.org/10.1145/3526113.3545683
+
 [3] McPherson, A.P., Gierakowski, A., and Stark, A.M. (2013). The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard. In *Proceedings of the SIGCHI Conference on Human Factors in Computing Systems* (CHI '13). Association for Computing Machinery, New York, NY, USA, 2195–2204. https://doi.org/10.1145/2470654.2481302
