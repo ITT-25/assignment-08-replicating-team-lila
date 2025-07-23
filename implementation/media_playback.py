@@ -17,7 +17,7 @@ class MediaPlayback:
 
         self.fs = fluidsynth.Synth()
         self.fs.start(driver="dsound", midi_driver=None)
-        sfid = self.fs.sfload("implementation/steinway_concert_piano.sf2")
+        sfid = self.fs.sfload("implementation/soundfont.sf2")
         
         # Set same instrument for all channels
         for ch in range(16):
