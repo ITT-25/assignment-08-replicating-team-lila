@@ -9,6 +9,8 @@
 
 # Requirements
 
+## FluidSynth
+
 In addition to the python dependencies, you will need to install [FluidSynth](https://www.fluidsynth.org).  
 If you have [chocolatey](https://chocolatey.org/) installed, you can run the following command:
 
@@ -18,6 +20,12 @@ choco install fluidsynth
 
 The application will directly pickup `FluidSynth` after installation.    
 For more installation options visit the [FluidSynth wiki](https://github.com/FluidSynth/fluidsynth/wiki/Download).
+
+## Soundfont
+
+You will need a soundfont file to play the piano sounds.   
+You can download the recommended soundfont [here](https://musical-artifacts.com/artifacts/6576).  
+Place the downloaded soundfont file in the `implementation` directory and rename it to `soundfont.sf2`.
 
 # Running the Application
 
