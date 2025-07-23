@@ -1,10 +1,9 @@
 import time
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Dict, Deque
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from fingertip_detection import Fingertip
 import config
-import cv2
-import numpy as np
 
 @dataclass
 class Note:
@@ -20,12 +19,17 @@ class Note:
 class Piano:
     """Maps fingertip positions to piano keys."""
     
-    def __init__(self, num_octaves: int = 2, pitch_range: Tuple[float, float] = (0.5, 2.0), pitch_bend_thresh: float = 75.0, vibrato_thresh_x: float = 20.0, vibrato_thresh_y: float = 50.0):
+    def __init__(self, num_octaves: int = 2, pitch_range: Tuple[float, float] = (0.5, 2.0), pitch_bend_thresh: float = 150.0, vibrato_thresh_x: float = 20.0, vibrato_thresh_y: float = 50.0):
         self.num_octaves: int = num_octaves
         self.pitch_range: Tuple[float, float] = pitch_range
-        self.pitch_bend_thresh: float = pitch_bend_thresh
-        self.vibrato_thresh_x: float = vibrato_thresh_x
-        self.vibrato_thresh_y: float = vibrato_thresh_y
+
+        self.pitch_bend_thresh: float = pitch_bend_thresh   # Minimum y-movement required for pitch bends
+        self.vibrato_thresh_x: float = vibrato_thresh_x   # Minimum x-movement required for vibrato
+        self.vibrato_thresh_y: float = vibrato_thresh_y   # Maximum y-movement allowed during vibrato
+        self.vibrato_time_window = 0.3      # Temporal threshold between direction changes for vibrato (in seconds)
+        self.vibrato_amplitude_window = 5.0     # Minimum x distance between reversals to register vibrato
+        self.vibrato_history: Dict[int, Deque[Tuple[float, float]]] = defaultdict(lambda: deque(maxlen=15))    # Tracks timestamp and x-position per fingertip for vibrato detection
+
         config.WINDOW_WIDTH = Note.width * self.num_octaves * 7
         config.WINDOW_HEIGHT = int(config.WINDOW_WIDTH // 1.77)
         self.keys: List[Note] = self._generate_keys()
@@ -162,6 +166,7 @@ class Piano:
 
         # Use the key's center as the reference point for pitch calculation
         relative_center = key.last_activation[1].position if key.last_activation else key.center
+        now = time.time()
 
         y_delta = fingertip.position[1] - relative_center[1]
         x_delta = fingertip.position[0] - relative_center[0]
@@ -174,13 +179,57 @@ class Piano:
 
         pitch = 1.0  # Default pitch value
         
-        if y_delta > self.pitch_bend_thresh:
-            # Map the y_delta to a pitch value
-            pitch = self._map_delta_to_pitch(key.height, y_delta, pitch_direction_y, key)
+        # If it's a sharp key, decrease spatial thresholds (since they are narrower and shorter)
+        if "#" in key.key:
+            # Check for pitch bend
+            if y_delta > self.pitch_bend_thresh * 0.6:
+                # Map the y_delta to a pitch value
+                pitch = self._map_delta_to_pitch(key.height, y_delta, pitch_direction_y, key)
+                return True, pitch
+            
+            # Check for vibrato
+            elif y_delta < self.vibrato_thresh_y * 0.4 and x_delta > self.vibrato_thresh_x * 0.6:
+                # Get fingertip's vibrato history and add current timestamp and x-position
+                hist = self.vibrato_history[fingertip.id]
+                hist.append((now, fingertip.position[0]))
+                crossings = []
+                # Check history for direction reversals (oscillatory movements)
+                for i in range(1, len(hist)):
+                    t1, x1 = hist[i - 1]
+                    t2, x2 = hist[i]
+                    if i >= 2:
+                        x0 = hist[i - 2][1]
+                        # Check if direction reversed
+                        if (x1 - x2) * (x0 - x1) < 0:
+                            # Check if reversal is large and quick enough
+                            if abs(x2 - x1) > self.vibrato_amplitude_window and (t2 - t1) <= self.vibrato_time_window:
+                                crossings.append((t1, t2))
 
-        elif y_delta < self.vibrato_thresh_y and x_delta > self.vibrato_thresh_x:
-            # Map the x_delta to a pitch value
-            pitch = self._map_delta_to_pitch(key.width, x_delta, pitch_direction_x, key)
+                # Apply vibrato if oscillations are detected
+                if crossings:
+                    pitch = self._map_delta_to_pitch(key.width, x_delta, pitch_direction_x, key)
+                    return True, pitch
+        else:
+            if y_delta > self.pitch_bend_thresh:
+                pitch = self._map_delta_to_pitch(key.height, y_delta, pitch_direction_y, key)
+                return True, pitch
+
+            elif y_delta < self.vibrato_thresh_y and x_delta > self.vibrato_thresh_x:
+                hist = self.vibrato_history[fingertip.id]
+                hist.append((now, fingertip.position[0]))
+                crossings = []
+                for i in range(1, len(hist)):
+                    t1, x1 = hist[i - 1]
+                    t2, x2 = hist[i]
+                    if i >= 2:
+                        x0 = hist[i - 2][1]
+                        if (x1 - x2) * (x0 - x1) < 0:
+                            if abs(x2 - x1) > self.vibrato_amplitude_window and (t2 - t1) <= self.vibrato_time_window:
+                                crossings.append((t1, t2))
+
+                if crossings:
+                    pitch = self._map_delta_to_pitch(key.width, x_delta, pitch_direction_x, key)
+                    return True, pitch
 
         return True, pitch
     
@@ -191,4 +240,4 @@ class Piano:
             return 1.0 + (delta / dimension)
         else:
             a = 1.0 - (delta / dimension)
-            return a if a > 0 else 0.1
+            return a if a > 0 else 0.1        
