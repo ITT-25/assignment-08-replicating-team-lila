@@ -2,7 +2,7 @@
 
 # 1.1 Paper Selection
 
-To find a suitable paper, we browsed the Journal Club forum in GRIPS and assessed which projects could realistically be completed within two weeks using the knowledge and hardware we had available. Ultimately, we chose *The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard* by McPherson et al [[1]](#references). This paper explores the addition of expressive pitch control such as pitch bends and vibratos to piano keyboards. McPherson et al. achieved this by adding capacitive touch sensors to the keys, allowing finger position and movement to modulate pitch.
+To find a suitable paper, we browsed the papers of several conferences including the CHI, UIST and ASSETS. Most, however, required either hardware not simply attainable or projects that would certainly exceed the time limit of two weeks, such as *Foot-Based Game Controller to Improve Interaction between Participants* by Oliwia et al [[1]](#references). Some seemed somewhat feasible, such as *Phrase-Gesture Typing on Smartphones* by Zheer et al [[2]](#references), which would require us to train a neural language model to recognize entire sentences, however we were unsure whether our knowledge and search for datasets would fit the time frame. When browsing the Journal Club forum in GRIPS, we ultimately chose *The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard* by McPherson et al [[3]](#references). This paper explores the addition of expressive pitch control such as pitch bends and vibratos to piano keyboards. McPherson et al. achieved this by adding capacitive touch sensors to the keys, allowing finger position and movement to modulate pitch.
 
 ## 1.2 CV-Based Approach instead of Capacitive Sensors
 
@@ -78,4 +78,6 @@ The dbugging frame that is displayed in the application window, unlike the appli
 
 # References
 
-[1] McPherson, A.P., Gierakowski, A., and Stark, A.M. (2013). The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard. In *Proceedings of the SIGCHI Conference on Human Factors in Computing Systems* (CHI '13). Association for Computing Machinery, New York, NY, USA, 2195–2204. https://doi.org/10.1145/2470654.2481302
+[1] Oliwia Sowińska, Anna Kubczak, Julia Dominiak, Natalia Walczak, and Laurent Babout. 2023. Foot-Based Game Controller to Improve Interaction between Participants. In Companion Proceedings of the Annual Symposium on Computer-Human Interaction in Play (CHI PLAY Companion '23). Association for Computing Machinery, New York, NY, USA, 196–201. https://doi.org/10.1145/3573382.3616098
+[2] Zheer Xu, Yankang Meng, Xiaojun Bi, and Xing-Dong Yang. 2022. Phrase-Gesture Typing on Smartphones. In Proceedings of the 35th Annual ACM Symposium on User Interface Software and Technology (UIST '22). Association for Computing Machinery, New York, NY, USA, Article 55, 1–11. https://doi.org/10.1145/3526113.3545683
+[3] McPherson, A.P., Gierakowski, A., and Stark, A.M. (2013). The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard. In *Proceedings of the SIGCHI Conference on Human Factors in Computing Systems* (CHI '13). Association for Computing Machinery, New York, NY, USA, 2195–2204. https://doi.org/10.1145/2470654.2481302
