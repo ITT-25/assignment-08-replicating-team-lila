@@ -22,8 +22,7 @@ For more installation options visit the [FluidSynth wiki](https://github.com/Flu
 # Running the Application
 
 ```bash
-cd implementation
-python main.py -c 0 -d
+python implementation/main.py -c 0 -d
 ```
 
 ## Command Line Parameters
