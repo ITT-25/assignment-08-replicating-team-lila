@@ -2,20 +2,19 @@
 
 # 1.1 Paper Selection
 
-To find a suitable paper, we browsed the papers of several conferences including the CHI, UIST and ASSETS. Most, however, required either hardware that was not easily attainable for us or projects that would certainly exceed the time limit of two weeks, such as *Foot-Based Game Controller to Improve Interaction between Participants* by Sowińska et al [[1]](#references). Some papers seemed somewhat feasible, such as *Phrase-Gesture Typing on Smartphones* by Xu et al [[2]](#references), which would require us to train a neural language model to recognize entire sentences. However, we were unsure whether our knowledge and search for datasets would fit the time frame. After examining the papers in the Journal Club forum in GRIPS as well, we ultimately decided on *The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard* by McPherson et al [[3]](#references). This paper explores the addition of expressive pitch control such as pitch bends and vibratos to piano keyboards. McPherson et al. achieved this by adding capacitive touch sensors to the keys, allowing finger position and movement to modulate pitch.
+To find a suitable paper, we browsed the papers of several conferences including the CHI, UIST and ASSETS. Most, however, required either hardware that was not easily attainable for us or projects that would certainly exceed the time limit of two weeks, such as *Foot-Based Game Controller to Improve Interaction between Participants* by Sowińska et al. [[1]](#references). Some papers seemed somewhat feasible, such as *Phrase-Gesture Typing on Smartphones* by Xu et al. [[2]](#references), which would require us to train a neural language model to recognize entire sentences. However, we were unsure whether our knowledge and search for datasets would fit the time frame. After examining the papers in the Journal Club forum in GRIPS as well, we ultimately decided on *The Space Between the Notes: Adding Expressive Pitch Control to the Piano Keyboard* by McPherson et al. [[3]](#references). This paper explores the addition of expressive pitch control such as pitch bends and vibratos to piano keyboards. McPherson et al. achieved this by adding capacitive touch sensors to the keys, allowing finger position and movement to modulate pitch.
 
 ## 1.2 CV-Based Approach instead of Capacitive Sensors
 
-We wanted to have a minimal setup that can be used with minimal hardware requirements and a simple setup.  
-Webcams and printed aruco markers are widely available and easy to set up, making them a good choice for our idea.
+We wanted to have a minimal setup that requires only basic hardware requirements and is easy to configure. Webcams and printed ArUco markers are widely available and easy to set up, making them a good choice for our idea.
 
-We purposely chose to slightly alter the approach from the paper by using a CV-based method instead of capacitive sensors. This makes the application more accessible and combines several concepts learned during the ITT course.
+We purposely chose to slightly alter the approach from the paper by using a CV-based method instead of capacitive sensors. This makes the application more accessible and brings together several concepts we learned during the ITT course.
 
 # 2 Apparatus
 
 <img src="docs/images/setup_sketch.png" alt="Setup sketch showing camera, piano area and user" width="80%" />
 
-To replicate the setup you need **4** 6x6 ArUco markers, a camera, a computer, and a flat surface.  
+To replicate the setup, you need **4** 6x6 ArUco markers, a camera, a computer, and a flat surface.  
 The camera should be positioned in front of the user, facing the piano area at a downward angle.   
 The ArUco markers should be placed anywhere in the area that the camera sees forming a rectangle.  
 As long as the camera can see all markers and is facing them at a downward angle of roughly `45°`, the application will work as intended.  
@@ -52,10 +51,10 @@ Using the area defined by the ArUco markers, the digital keyboard automatically 
 
 <img src="docs/images/key_press_detection_demo.png" alt="Key press detection demo" width="30%" />
 
-The blue arrows indicate the distance delta that we use to detect if a piano key is pressed or not.  
+The blue arrows indicate the distance delta that we use to detect whether or not a piano key is pressed.  
 If a short distance delta followed by a long distance delta is detected, we assume that the key was pressed because the distance gets shorter when the user lifts their finger thanks to the camera angle. This method is not ideal but suffices for a proof of concept; in a real application additional camera angles, capacitive sensors or other methods would be used to detect key presses more reliably.
 
-Mediapipe does support 3D hand landmark detection which we tried extensively but it ultimately had too much noise and was not suitable to reliably track clicks.
+MediaPipe does support 3D hand landmark detection which we tried extensively but it ultimately had too much noise and was not suitable to reliably track key presses.
 
 ## 3.6 Media Playback
 
@@ -65,7 +64,7 @@ Played notes are assigned to their own MIDI channel, which can then be manipulat
 
 ## 3.7 Pitch Control
 
-Pitch bends are triggered by moving a finger along the y-axis while pressing a key. Sliding the finger upwards increases the pitch, sliding downward decreases it. To avoid accidental triggers, the vertical movement must exceed a defined threshold.
+Pitch bends are triggered by moving a finger along the y-axis while pressing a key. Sliding the finger upward increases the pitch, sliding downward decreases it. To avoid accidental triggers, the vertical movement must exceed a defined threshold.
 
 Vibrato is triggered by rapidly moving a finger along the x-axis while keeping it on the key. This causes the pitch to oscillate (or *"wiggle"*). To prevent unintended triggers, several conditions must be met:
 - the x-axis movement must exceed a minimum amplitude
@@ -74,7 +73,7 @@ Vibrato is triggered by rapidly moving a finger along the x-axis while keeping i
 
 ## 3.8 Debugging Frame
 
-The dbugging frame that is displayed in the application window, unlike the application logic, does not use the perspective transformation. It shows exactly what the camera sees but uses the inverse projection matrix from the markers to draw the digital piano keyboard as an overlay. To improve the visual quality the hands are masked and overlayed on top of the piano visualization. This allows for a clear view of the piano keys and the hands.
+Unlike the application logic, the debugging frame that is displayed in the application window does not use the perspective transformation. It shows exactly what the camera sees but uses the inverse projection matrix from the markers to draw the digital piano keyboard as an overlay. To improve the visual quality, the hands are masked and overlayed on top of the piano visualization. This allows for a clear view of the piano keys and the hands.
 
 # References
 
