@@ -74,8 +74,9 @@ def capture_loop(dt: float, frame: np.ndarray) -> None:
     
     media.update(dt)
     
-    cv2.imshow("Overlay", final_frame)
-    cv2.waitKey(1)
+    if cfg.DEBUG:
+        cv2.imshow("Overlay", final_frame)
+        cv2.waitKey(1)
 
 @click.command()
 @click.option("--video-id", "-c", default=1, help="Video ID")
@@ -84,8 +85,7 @@ def capture_loop(dt: float, frame: np.ndarray) -> None:
 @click.option("--velocity-threshold", "-v", default=20, help="Minimum distance velocity for finger press detection (pixels/frame)")
 def main(video_id: int, debug: bool, press_threshold: int, velocity_threshold: int) -> None:
     """Main function to capture video and process frames."""
-    global DEBUG_VISUALIZE
-    DEBUG_VISUALIZE = debug
+    cfg.DEBUG = debug
     
     # Set the thresholds from CLI parameters
     cfg.PRESS_DISTANCE_THRESHOLD = press_threshold
